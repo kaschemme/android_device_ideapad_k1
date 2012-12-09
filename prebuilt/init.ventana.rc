@@ -5,10 +5,8 @@ on early-init
 
     export EXTERNAL_STORAGE /mnt/sdcard
     export EXTERNAL_STORAGE2 /mnt/sdcard2
-
     mkdir /mnt/sdcard 0000 system system
-    
-# for backwards compatibility
+    # for backwards compatibility
     symlink /mnt/sdcard /sdcard
 
     mkdir /mnt/sdcard2 0000 system system
@@ -41,9 +39,6 @@ on post-fs-data
 
 on boot
 # bluetooth
-    # UART device
-    chmod 0660 /dev/ttyHS2
-    chown bluetooth bluetooth /dev/ttyHS2
     # power up/down interface
     chmod 0660 /sys/class/rfkill/rfkill0/state
     chmod 0660 /sys/class/rfkill/rfkill0/type
@@ -58,10 +53,8 @@ on boot
     chown system system /sys/class/backlight/pwm-backlight/brightness
 
 # Sensor
-    chmod 0664 /sys/bus/iio/devices/device0/illuminance0_input
-    chmod 0664 /sys/bus/iio/devices/device0/proximity_raw
-    chmod 0664 /sys/bus/iio/devices/device0/illuminance0_calibbias
-    write /sys/bus/iio/devices/device0/illuminance0_calibbias 8192
+    chmod 664 /sys/bus/iio/devices/device0/illuminance0_input
+    chmod 664 /sys/bus/iio/devices/device0/proximity_raw
 
 
 # Power management settings

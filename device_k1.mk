@@ -19,13 +19,12 @@ include frameworks/base/build/tablet-dalvik-heap.mk
 # The gps config appropriate for this device
 $(call inherit-product, device/common/gps/gps_us_supl.mk)
 
-#$(call inherit-product-if-exists, vendor/asus/tf101/tf101-vendor.mk)
-
 DEVICE_PACKAGE_OVERLAYS += device/lenovo/k1/overlay
 
 # Prebuilt kernel location
 ifeq ($(TARGET_PREBUILT_KERNEL),)
-	LOCAL_KERNEL := device/lenovo/k1/kernel
+#	LOCAL_KERNEL := device/lenovo/k1/kernel
+        LOCAL_KERNEL := device/lenovo/k1/zImage
 else
 	LOCAL_KERNEL := $(TARGET_PREBUILT_KERNEL)
 endif
@@ -85,8 +84,8 @@ PRODUCT_COPY_FILES += \
     
 #/system/etc/gps
 PRODUCT_COPY_FILES += \
-    vendor/lenovo/k1/proprietary/etc/gps/gpsconfig.xml:system/etc/gps/gpsconfig.xml
-    $(LOCAL_PATH)/apns/apns-conf.xml:system/etc/apns-conf.xml
+    vendor/lenovo/k1/proprietary/etc/gps/gpsconfig.xml:system/etc/gps/gpsconfig.xml \
+    device/lenovo/k1/apns/apns-conf.xml:system/etc/apns-conf.xml \
 
 #/system/etc/permissions
 PRODUCT_COPY_FILES += \
@@ -209,7 +208,7 @@ PRODUCT_COPY_FILES += \
 
 #/system/media
 PRODUCT_COPY_FILES += \
-    device/lenovo/k1/prebuilt/bootanimation.zip:system/media/bootanimation.zip \
+    device/lenovo/k1/prebuilt/bootanimation.zip:system/media/bootanimation.zip
 
 #/system/usr/idc
 PRODUCT_COPY_FILES += \
@@ -328,3 +327,44 @@ $(call inherit-product, device/lenovo/k1/goo.mk)
 
 WIFI_BAND := 802_11_ABG
 $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4329/device-bcm.mk)
+
+# Google Apps
+PRODUCT_COPY_FILES += \
+	device/lenovo/k1/prebuilt/system/app/ChromeBookmarksSyncAdapter.apk:system/app/ChromeBookmarksSyncAdapter.apk \
+	device/lenovo/k1/prebuilt/system/app/GenieWidget.apk:system/app/GenieWidget.apk \
+	device/lenovo/k1/prebuilt/system/app/Gmail.apk:system/app/Gmail.apk \
+	device/lenovo/k1/prebuilt/system/app/GoogleBackupTransport.apk:system/app/GoogleBackupTransport.apk \
+	device/lenovo/k1/prebuilt/system/app/GoogleCalendarSyncAdapter.apk:system/app/GoogleCalendarSyncAdapter.apk \
+	device/lenovo/k1/prebuilt/system/app/GoogleContactsSyncAdapter.apk:system/app/GoogleContactsSyncAdapter.apk \
+	device/lenovo/k1/prebuilt/system/app/GoogleLoginService.apk:system/app/GoogleLoginService.apk \
+	device/lenovo/k1/prebuilt/system/app/GooglePartnerSetup.apk:system/app/GooglePartnerSetup.apk \
+	device/lenovo/k1/prebuilt/system/app/GoogleServicesFramework.apk:system/app/GoogleServicesFramework.apk \
+	device/lenovo/k1/prebuilt/system/app/GoogleTTS.apk:system/app/GoogleTTS.apk \
+	device/lenovo/k1/prebuilt/system/app/MarketUpdater.apk:system/app/MarketUpdater.apk \
+	device/lenovo/k1/prebuilt/system/app/MediaUploader.apk:system/app/MediaUploader.apk \
+	device/lenovo/k1/prebuilt/system/app/NetworkLocation.apk:system/app/NetworkLocation.apk \
+	device/lenovo/k1/prebuilt/system/app/OneTimeInitializer.apk:system/app/OneTimeInitializer.apk \
+        device/lenovo/k1/prebuilt/system/app/SetupWizard.apk:system/app/SetupWizard.apk \
+        device/lenovo/k1/prebuilt/system/app/Talk.apk:system/app/Talk.apk \
+	device/lenovo/k1/prebuilt/system/app/PlayStore.apk:system/app/PlayStore.apk \
+        device/lenovo/k1/prebuilt/system/app/VoiceSearch.apk:system/app/VoiceSearch.apk
+
+
+PRODUCT_COPY_FILES += \
+        device/lenovo/k1/prebuilt/system/etc/permissions/com.google.android.maps.xml:system/etc/permissions/com.google.android.maps.xml \
+        device/lenovo/k1/prebuilt/system/etc/permissions/com.google.android.media.effects.xml:system/etc/permissions/com.google.android.media.effects.xml \
+	 device/lenovo/k1/prebuilt/system/etc/permissions/com.google.widevine.software.drm.xml:system/etc/permissions/com.google.widevine.software.drm.xml \
+        device/lenovo/k1/prebuilt/system/etc/g.prop:system/etc/g.prop
+
+PRODUCT_COPY_FILES += \
+        device/lenovo/k1/prebuilt/system/framework/com.google.android.maps.jar:system/framework/com.google.android.maps.jar \
+        device/lenovo/k1/prebuilt/system/framework/com.google.android.media.effects.jar:system/framework/com.google.android.media.effects.jar \
+        device/lenovo/k1/prebuilt/system/framework/com.google.widevine.software.drm.jar:system/framework/com.google.widevine.software.drm.jar
+
+PRODUCT_COPY_FILES += \
+        device/lenovo/k1/prebuilt/system/lib/libflint_engine_jni_api.so:system/lib/libflint_engine_jni_api.so \
+        device/lenovo/k1/prebuilt/system/lib/libfrsdk.so:system/lib/libfrsdk.so \
+        device/lenovo/k1/prebuilt/system/lib/libgcomm_jni.so:system/lib/libgcomm_jni.so \
+        device/lenovo/k1/prebuilt/system/lib/libspeexwrapper.so:system/lib/libspeexwrapper.so \
+        device/lenovo/k1/prebuilt/system/lib/libpicowrapper.so:system/lib/libpicowrapper.so \
+        device/lenovo/k1/prebuilt/system/lib/libvoicesearch.so:system/lib/libvoicesearch.so
