@@ -23,8 +23,7 @@ DEVICE_PACKAGE_OVERLAYS += device/lenovo/k1/overlay
 
 # Prebuilt kernel location
 ifeq ($(TARGET_PREBUILT_KERNEL),)
-#	LOCAL_KERNEL := device/lenovo/k1/kernel
-        LOCAL_KERNEL := device/lenovo/k1/zImage
+	LOCAL_KERNEL := device/lenovo/k1/kernel
 else
 	LOCAL_KERNEL := $(TARGET_PREBUILT_KERNEL)
 endif
@@ -52,6 +51,7 @@ PRODUCT_COPY_FILES += \
 #/system/etc
 PRODUCT_COPY_FILES += \
     device/lenovo/k1/prebuilt/vold.fstab:system/etc/vold.fstab \
+    vendor/lenovo/k1/gps.conf:system/etc/gps.conf \
     vendor/lenovo/k1/proprietary/etc/nvram.txt:system/etc/nvram.txt \
     vendor/lenovo/k1/proprietary/etc/asound.conf:system/etc/asound.conf \
     vendor/lenovo/k1/proprietary/etc/nvcamera.conf:system/etc/nvcamera.conf \
@@ -85,7 +85,11 @@ PRODUCT_COPY_FILES += \
 #/system/etc/gps
 PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/etc/gps/gpsconfig.xml:system/etc/gps/gpsconfig.xml \
-    device/lenovo/k1/apns/apns-conf.xml:system/etc/apns-conf.xml \
+
+# apns config file
+PRODUCT_COPY_FILES += \
+    development/data/etc/apns-conf.xml:system/etc/apns-conf.xml \
+
 
 #/system/etc/permissions
 PRODUCT_COPY_FILES += \
@@ -97,6 +101,8 @@ PRODUCT_COPY_FILES += \
     frameworks/base/data/etc/android.hardware.sensor.barometer.xml:system/etc/permissions/android.hardware.sensor.barometer.xml \
     frameworks/base/data/etc/android.hardware.sensor.gyroscope.xml:system/etc/permissions/android.hardware.sensor.gyroscope.xml \
     frameworks/base/data/etc/android.hardware.camera.flash-autofocus.xml:system/etc/permissions/android.hardware.camera.flash-autofocus.xml \
+    frameworks/base/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
+    frameworks/base/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
     frameworks/base/data/etc/android.hardware.camera.front.xml:system/etc/permissions/android.hardware.camera.front.xml \
     frameworks/base/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
     frameworks/base/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
@@ -206,9 +212,10 @@ PRODUCT_COPY_FILES += \
     device/lenovo/k1/prebuilt/bcm4329.ko:system/lib/modules/bcm4329.ko \
     device/lenovo/k1/prebuilt/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko
 
-#/system/media
+# Media
 PRODUCT_COPY_FILES += \
     device/lenovo/k1/prebuilt/bootanimation.zip:system/media/bootanimation.zip
+
 
 #/system/usr/idc
 PRODUCT_COPY_FILES += \
@@ -227,6 +234,7 @@ PRODUCT_COPY_FILES += \
 #/system/usr/keylayout
 PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/usr/keylayout/Generic.kl:system/usr/keylayout/Generic.kl \
+    vendor/lenovo/k1/proprietary/usr/keylayout/avago-pt.kl:system/usr/keylayout/avago-pt.kl \
     vendor/lenovo/k1/proprietary/usr/keylayout/AVRCP.kl:system/usr/keylayout/AVRCP.kl \
     vendor/lenovo/k1/proprietary/usr/keylayout/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \
     vendor/lenovo/k1/proprietary/usr/keylayout/qwerty.kl:system/usr/keylayout/qwerty.kl \
@@ -276,10 +284,6 @@ PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/vendor/firmware/bcm4330/fw_bcmdhd_p2p.bin:system/vendor/firmware/bcm4330/fw_bcmdhd_p2p.bin \
     vendor/lenovo/k1/proprietary/vendor/firmware/bcm4330/fw_bcmdhd.bin:system/vendor/firmware/bcm4330/fw_bcmdhd.bin
 
-# Set default USB interface
-#PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-#	persist.sys.usb.config=mtp
-
 PRODUCT_PACKAGES := \
     camera.tegra \
     gps.tegra \
@@ -287,16 +291,25 @@ PRODUCT_PACKAGES := \
     sensors.ventana \
     librs_jni \
     make_ext4fs \
+    setup_fs \
+    audio.primary.ventana \
+    audio.a2dp.default \
     com.android.future.usb.accessory \
     whisperd \
     liba2dp \
     camera.tegra \
     libtinyalsa \
+    libaudioutils \
     tinyplay \
     tinycap \
-    tinymix
+    tinymix \
+    su \
+    Superuser \
+    Trebuchet \
+    ToggleBar
 
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.secure=0
+PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
 
 ADDITIONAL_DEFAULT_PROPERTIES += \
     ro.secure=0 \

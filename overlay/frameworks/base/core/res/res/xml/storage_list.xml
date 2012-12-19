@@ -42,12 +42,10 @@
              android:storageDescription="@string/storage_sd_card"
              android:primary="false"
 	     android:removable="true"
-             android:emulated="false"
-             android:mtpReserve="100" />
+             android:emulated="false" />
     <storage android:mountPoint="/mnt/usbdrive"
              android:storageDescription="@string/storage_usb"
              android:primary="false"
 	     android:removable="true"
-             android:emulated="false"
-             android:mtpReserve="100" />
+             android:emulated="false" />
 </StorageList>

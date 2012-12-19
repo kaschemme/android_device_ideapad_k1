@@ -1,5 +1,8 @@
-# Release name
-PRODUCT_RELEASE_NAME := K1
+## Specify phone tech before including full_phone
+$(call inherit-product, vendor/cm/config/gsm.mk)
+
+# Inherit some common stuff.
+$(call inherit-product, build/target/product/full_base_telephony.mk)
 
 # Inherit some common CM stuff.
 $(call inherit-product, vendor/cm/config/common_full_tablet_wifionly.mk)
@@ -8,6 +11,7 @@ $(call inherit-product, vendor/cm/config/common_full_tablet_wifionly.mk)
 $(call inherit-product, device/lenovo/k1/full_k1.mk)
 
 ## Device identifier. This must come after all inclusions
+PRODUCT_RELEASE_NAME := K1
 PRODUCT_DEVICE := k1
 PRODUCT_NAME := cm_k1
 PRODUCT_RELEASE_NAME := k1
