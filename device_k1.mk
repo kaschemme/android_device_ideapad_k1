@@ -366,7 +366,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/media_profiles.xml:system/etc/media_profiles.xml \
 
 # goo.im stuff
-#$(call inherit-product, device/lenovo/k1/goo.mk)
+$(call inherit-product, device/lenovo/k1/goo.mk)
 
 WIFI_BAND := 802_11_ABG
 $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4329/device-bcm.mk)

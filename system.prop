@@ -9,7 +9,6 @@ ro.ethernet.interface=eth0
 ro.ethernet.autoEnable=yes
 # 3G
 rild.libpath=/system/lib/libhuawei-ril.so
-rild.libargs=-d /dev/ttyUSB2
 ro.pad.features.modem=true 
 rild.libargs=-d /dev/ttyUSB2 -v /dev/ttyUSB1
 service.ctool.3g.enable=n
@@ -20,3 +19,7 @@ net.ppp0.dns1=8.8.8.8
 net.ppp0.dns2=8.8.4.4
 net.dns1=8.8.8.8
 net.dns2=8.8.4.4
+# Goo Manager Information
+ro.goo.developerid=kaschemme
+ro.goo.rom=CM10_K1_Kaschemme
+ro.goo.version=1
