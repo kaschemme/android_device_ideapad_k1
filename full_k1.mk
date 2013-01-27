@@ -20,10 +20,8 @@
 #
 
 # A few more packages that aren't quite used on all builds
-PRODUCT_PACKAGES := \
-	HoloSpiralWallpaper \
-	LiveWallpapersPicker \
-	VisualizationWallpapers
+PRODUCT_PACKAGES += \
+  Mms
 
 # Camera
 PRODUCT_PACKAGES += \

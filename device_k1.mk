@@ -1,9 +1,26 @@
+#
+# Copyright (C) 2012 The CyanogenMod Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
+
+# inherit proprietary files
+$(call inherit-product-if-exists, vendor/lenovo/k1/k1-vendor.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
-
-# The gps config appropriate for this device
+$(call inherit-product, build/target/product/full_base.mk)
 $(call inherit-product, device/common/gps/gps_eu_supl.mk)
-
-DEVICE_PACKAGE_OVERLAYS += device/lenovo/k1/overlay
+$(call inherit-product, $(SRC_TARGET_DIR)/product/telephony.mk)
 
 # Prebuilt kernel location
 ifeq ($(TARGET_PREBUILT_KERNEL),)
@@ -19,7 +36,8 @@ PRODUCT_COPY_FILES += \
     device/lenovo/k1/prebuilt/init.nv_dev_board.usb.rc:root/init.nv_dev_board.usb.rc \
     device/lenovo/k1/prebuilt/init.logging.rc:root/init.logging.rc \
     device/lenovo/k1/prebuilt/ueventd.ventana.rc:root/ueventd.ventana.rc \
-    device/lenovo/k1/prebuilt/ueventd.goldfish.rc:root/ueventd.goldfish.rc
+    device/lenovo/k1/prebuilt/ueventd.goldfish.rc:root/ueventd.goldfish.rc \
+    $(LOCAL_PATH)/prebuilt/gsm::root/sbin/gsm 
 
 #/system/bin
 PRODUCT_COPY_FILES += \
@@ -80,11 +98,12 @@ PRODUCT_COPY_FILES += \
 #/system/etc/permissions
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/tablet_core_hardware.xml:system/etc/permissions/tablet_core_hardware.xml \
+    frameworks/native/data/etc/android.hardware.camera.xml:system/etc/permissions/android.hardware.camera.xml \
     frameworks/native/data/etc/android.hardware.camera.front.xml:system/etc/permissions/android.hardware.camera.front.xml \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:system/etc/permissions/android.hardware.camera.flash-autofocus.xml \
     frameworks/native/data/etc/android.hardware.camera.xml:system/etc/permissions/android.hardware.camera.xml \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
-frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
+    frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
     frameworks/native/data/etc/android.hardware.sensor.compass.xml:system/etc/permissions/android.hardware.sensor.compass.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:system/etc/permissions/android.hardware.sensor.light.xml \
@@ -99,6 +118,22 @@ frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/
     frameworks/native/data/etc/android.hardware.sensor.barometer.xml:system/etc/permissions/android.hardware.sensor.barometer.xml \
     frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
     packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml
+
+#/system/etc/ppp
+PRODUCT_COPY_FILES += \
+    device/lenovo/k1/prebuilt/ppp/ip-down:system/etc/ppp/ip-down \
+    device/lenovo/k1/prebuilt/ppp/ip-up:system/etc/ppp/ip-up \
+    $(LOCAL_PATH)/prebuilt/etc/init.d/02ppp.sh:system/etc/init.d/02ppp.sh \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/peers/3g:system/etc/ppp/peers/3g \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/peers/gprs:system/etc/ppp/peers/gprs \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/peers/pppd-ril.options:system/etc/ppp/peers/pppd-ril.options \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/chap-secrets:system/etc/ppp/chap-secrets \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/gprs-connect-chat:system/etc/ppp/gprs-connect-chat \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/ip-down-HUAWEI:system/etc/ppp/ip-down-HUAWEI \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/ip-up-HUAWEI:system/etc/ppp/ip-up-HUAWEI \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/options.huawei:system/etc/ppp/options.huawei \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/pap-secrets:system/etc/ppp/pap-secrets
+
 
 #/system/lib
 PRODUCT_COPY_FILES += \
@@ -305,13 +340,17 @@ PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
 ADDITIONAL_DEFAULT_PROPERTIES += \
     ro.secure=0 \
     ro.sf.lcd_density=160 \
-    persist.sys.usb.config=mass_storage \
+    persist.sys.usb.config=mtp \
     dalvik.vm.heapstartsize=5m \
     dalvik.vm.heapgrowthlimit=48m \
-    dalvik.vm.heapsize=256m
+    dalvik.vm.heapsize=256m \
+    net.bt.name=Android
+
 
 PRODUCT_PROPERTY_OVERRIDES := \
     wifi.interface=wlan0 \
+    mobiledata.interfaces=ppp0,wlan0 \
+    net.cdma.ppp.interace=ppp0 \
     wifi.supplicant_scan_interval=15 \
 
 # DEVICE_PACKAGE_OVERLAYS := \ device/lenovo/k1/overlay

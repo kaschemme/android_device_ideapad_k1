@@ -1,11 +1,22 @@
+#
 # system.prop for K1
-
+#
 # The OpenGL ES API level that is natively supported by this device.
 # This is a 16.16 fixed point number
-ro.opengles.version = 131072
-
+ro.opengles.version=131072
+# Ethernet
+ro.ethernet.interface=eth0
+ro.ethernet.autoEnable=yes
+# 3G
 rild.libpath=/system/lib/libhuawei-ril.so
-#rild.libargs=-d /dev/ttyACM0 -i wwan0
+rild.libargs=-d /dev/ttyUSB2
+ro.pad.features.modem=true 
 rild.libargs=-d /dev/ttyUSB2 -v /dev/ttyUSB1
 service.ctool.3g.enable=n
-keyguard.no_require_sim=1
+keyguard.no_require_sim=true
+
+#dns
+net.ppp0.dns1=8.8.8.8
+net.ppp0.dns2=8.8.4.4
+net.dns1=8.8.8.8
+net.dns2=8.8.4.4
