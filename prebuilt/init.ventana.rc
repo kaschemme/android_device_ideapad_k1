@@ -8,11 +8,7 @@ on early-init
 
     # FIXME: Market checks this variable for space-checking, but downloads to /datadata
     export DOWNLOAD_CACHE /data/download
-    # Google Play Crashed without the following folder
-    mkdir /data/download
-    chown system system /data/download
-    chmod 771 /data/download
-
+    
     mkdir /storage 0050 system sdcard_r
     mkdir /storage/sdcard0 0000 system system
     mkdir /storage/sdcard1 0000 system system
@@ -48,15 +44,25 @@ on fs
     chmod 0666 /dev/block/mmcblk0p5
 
 on post-fs-data
+    # Wi-Fi
     mkdir /data/misc/wifi 0770 wifi wifi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
-    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    #
     mkdir /data/nvcam 0777 system system
+    # DHCP
+    mkdir /data/misc/dhcp 0770 dhcp dhcp    
     chown dhcp dhcp /data/misc/dhcp
 
     # we will remap this as /mnt/sdcard with the sdcard fuse tool
     mkdir /data/media 0775 media_rw media_rw
     chown media_rw media_rw /data/media
+    
+    # logs
+    mkdir /data/log 0775 root root
+    chmod 0775 /data/log
+
+    # for migrating download provider's cache out of the small /data/data
+    mkdir /data/data2 0771 system system
 
     # Set indication (checked by vold) that we have finished this action
     setprop vold.post_fs_data_done 1
