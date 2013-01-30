@@ -13,3 +13,7 @@
 # limitations under the License.
 
 LOCAL_PATH := $(my-dir)
+
+ifeq ($(TARGET_DEVICE),k1)
+include $(call all-makefiles-under,$(LOCAL_PATH))
+endif

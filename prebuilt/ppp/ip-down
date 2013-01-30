@@ -5,7 +5,6 @@ case $1 in
 	;;
 esac
 
-rm /data/ppp/ppp*.pid
 rm /etc/ppp/ppp*.pid
 
 # Use interface name if linkname is not available
@@ -15,4 +14,3 @@ NAME=${LINKNAME:-"$1"}
 #/system/bin/setprop "net.dns2" "" 
 /system/bin/setprop "net.$NAME.local-ip" "" 
 /system/bin/setprop "net.$NAME.remote-ip" "" 
-/system/bin/setprop "net.$NAME.gw" ""

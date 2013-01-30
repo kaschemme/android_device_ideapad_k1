@@ -20,8 +20,12 @@ on early-init
     # create directory for mounting usb drives
     mkdir /storage/usbdisk 0666 system system
     symlink /storage/usbdisk /mnt/usbdrive
-    
+    # FIXME: Remove emmc?
     mkdir /datadata 0771 system system
+    
+    # We will create our own ril-daemon service in class 'core' because the
+    # rild doesn't like being killed. (During device encryption.)
+    stop ril-daemon
 
 #For CPu clocking
     chmod 777	/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -57,6 +61,9 @@ on post-fs-data
     mkdir /data/media 0775 media_rw media_rw
     chown media_rw media_rw /data/media
     
+    # download cache
+    mkdir /data/download 0770 system cache
+
     # logs
     mkdir /data/log 0775 root root
     chmod 0775 /data/log
@@ -66,6 +73,13 @@ on post-fs-data
 
     # Set indication (checked by vold) that we have finished this action
     setprop vold.post_fs_data_done 1
+
+service aries-ril-daemon /system/bin/rild
+    class core
+    socket rild stream 660 root radio
+    socket rild-debug stream 660 radio system
+    user root
+    group radio cache inet misc audio log
 
 on boot
 # bluetooth

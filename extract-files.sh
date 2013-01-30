@@ -1,14 +1,17 @@
-#!/bin/sh
+#/bin/sh
 
-BASE=../../../vendor/lenovo/k1/proprietary
-rm -rf $BASE/*
+VENDOR=lenovo
+DEVICE=k1
 
-for FILE in `cat proprietary-files.txt`; do
-    DIR=`dirname $FILE`
-    if [ ! -d $BASE/$DIR ]; then
-        mkdir -p $BASE/$DIR
-    fi
-    adb pull /system/$FILE $BASE/$FILE
-done
+OUTD=../../../vendor/$VENDOR/$DEVICE
+PROPD=$OUTD/proprietary
+
+[ ! -d $OUTD ] && mkdir -p $OUTD || rm -rf $OUTD/*
+
+while read file; do
+    dir=$PROPD/$(dirname $file)
+    [ ! -d $dir ] && mkdir $dir
+    adb pull /system/$file $PROPD/$file
+done < proprietary-files.txt
 
 ./setup-makefiles.sh
