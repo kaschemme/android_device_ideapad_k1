@@ -28,212 +28,93 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdarg.h>
-
-#include <poll.h>
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "AT"
 #include <utils/Log.h>
 
+/* backwards compatibility for pre-JB */
+#ifndef ALOGD
+#define ALOGD LOGD
+#define ALOGE LOGE
+#define ALOGI LOGI
+#endif
+
 #ifdef HAVE_ANDROID_OS
-/* For IOCTL's */
+/* for IOCTL's */
 #include <linux/omap_csmi.h>
 #endif /*HAVE_ANDROID_OS*/
 
 #include "misc.h"
 
+#ifdef HAVE_ANDROID_OS
+#define USE_NP 1
+#endif /* HAVE_ANDROID_OS */
+
+
+#define NUM_ELEMS(x) (sizeof(x)/sizeof(x[0]))
+
 #define MAX_AT_RESPONSE (8 * 1024)
 #define HANDSHAKE_RETRY_COUNT 8
 #define HANDSHAKE_TIMEOUT_MSEC 250
-#define DEFAULT_AT_TIMEOUT_MSEC (3 * 60 * 1000)
-#define BUFFSIZE 512
 
-struct atcontext {
-    pthread_t tid_reader;
-    int fd;                  /* fd of the AT channel. */
-    int readerCmdFds[2];
-    int isInitialized;
-    ATUnsolHandler unsolHandler;
+static pthread_t s_tid_reader;
+static int s_fd = -1;    /* fd of the AT channel */
+static ATUnsolHandler s_unsolHandler;
 
-    /* For input buffering. */
-    char ATBuffer[MAX_AT_RESPONSE+1];
-    char *ATBufferCur;
+/* for input buffering */
 
-    int readCount;
+static char s_ATBuffer[MAX_AT_RESPONSE+1];
+static char *s_ATBufferCur = s_ATBuffer;
 
-    /*
-     * For current pending command, these are protected by commandmutex.
-     *
-     * The mutex and cond struct is memset in the getAtChannel() function,
-     * so no initializer should be needed.
-     */
-    pthread_mutex_t requestmutex;
-    pthread_mutex_t commandmutex;
-    pthread_cond_t requestcond;
-    pthread_cond_t commandcond;
-
-    ATCommandType type;
-    const char *responsePrefix;
-    const char *smsPDU;
-    ATResponse *response;
-
-    void (*onTimeout)(void);
-    void (*onReaderClosed)(void);
-    int readerClosed;
-
-    int timeoutMsec;
-};
-
-static struct atcontext *s_defaultAtContext = NULL;
-static va_list empty = {0};
-
-static pthread_key_t key;
-static pthread_once_t key_once = PTHREAD_ONCE_INIT;
-
-static int writeCtrlZ (const char *s);
-static int writeline (const char *s);
-static void onReaderClosed(void);
-
-static void make_key(void)
-{
-    (void) pthread_key_create(&key, NULL);
-}
-
-/**
- * Set the atcontext pointer. Useful for sub-threads that needs to hold
- * the same state information.
- *
- * The caller IS responsible for freeing any memory already allocated
- * for any previous atcontexts.
- */
-static void setAtContext(struct atcontext *ac)
-{
-    (void) pthread_once(&key_once, make_key);
-    (void) pthread_setspecific(key, ac);
-}
-
-static void ac_free(void)
-{
-    struct atcontext *ac = NULL;
-    (void) pthread_once(&key_once, make_key);
-    if ((ac = (struct atcontext *) pthread_getspecific(key)) != NULL) {
-        free(ac);
-        LOGD("%s() freed current thread AT context", __func__);
-    } else {
-        LOGW("%s() No AT context exist for current thread, cannot free it",
-            __func__);
-    }
-}
-
-static int initializeAtContext(void)
-{
-    struct atcontext *ac = NULL;
-
-    if (pthread_once(&key_once, make_key)) {
-        LOGE("%s() Pthread_once failed!", __func__);
-        goto error;
-    }
-
-    ac = (struct atcontext *)pthread_getspecific(key);
-
-    if (ac == NULL) {
-        ac = (struct atcontext *) malloc(sizeof(struct atcontext));
-        if (ac == NULL) {
-            LOGE("%s() Failed to allocate memory", __func__);
-            goto error;
-        }
-
-        memset(ac, 0, sizeof(struct atcontext));
-
-        ac->fd = -1;
-        ac->readerCmdFds[0] = -1;
-        ac->readerCmdFds[1] = -1;
-        ac->ATBufferCur = ac->ATBuffer;
-
-        if (pipe(ac->readerCmdFds)) {
-            LOGE("%s() Failed to create pipe: %s", __func__, strerror(errno));
-            goto error;
-        }
-
-        pthread_mutex_init(&ac->commandmutex, NULL);
-        pthread_mutex_init(&ac->requestmutex, NULL);
-        pthread_cond_init(&ac->requestcond, NULL);
-        pthread_cond_init(&ac->commandcond, NULL);
-
-        ac->timeoutMsec = DEFAULT_AT_TIMEOUT_MSEC;
-
-        if (pthread_setspecific(key, ac)) {
-            LOGE("%s() Calling pthread_setspecific failed!", __func__);
-            goto error;
-        }
-    }
-
-    LOGI("Initialized new AT Context!");
-
-    return 0;
-
-error:
-    LOGE("%s() Failed initializing new AT Context!", __func__);
-    free(ac);
-    return -1;
-}
-
-static struct atcontext *getAtContext(void)
-{
-    struct atcontext *ac = NULL;
-
-    (void) pthread_once(&key_once, make_key);
-
-    if ((ac = (struct atcontext *) pthread_getspecific(key)) == NULL) {
-        if (s_defaultAtContext) {
-            LOGW("WARNING! external thread use default AT Context");
-            ac = s_defaultAtContext;
-        } else {
-            LOGE("WARNING! %s() called from external thread with "
-                 "no defaultAtContext set!! This IS a bug! "
-                 "A crash is probably nearby!", __func__);
-        }
-    } 
-
-    return ac;
-}
-
-/**
- * This function will make the current at thread the default channel,
- * meaning that calls from a thread that is not a queuerunner will
- * be executed in this context.
- */
-void at_make_default_channel(void)
-{
-    struct atcontext *ac = getAtContext();
-
-    if (ac->isInitialized)
-        s_defaultAtContext = ac;
-}
+static int s_ackPowerIoctl; /* true if TTY has android byte-count
+                                handshake for low power*/
+static int s_readCount = 0;
 
 #if AT_DEBUG
 void  AT_DUMP(const char*  prefix, const char*  buff, int  len)
 {
     if (len < 0)
         len = strlen(buff);
-    LOGD("%.*s", len, buff);
+    ALOGD("%.*s", len, buff);
 }
 #endif
 
-#ifndef HAVE_ANDROID_OS
-int pthread_cond_timeout_np(pthread_cond_t *cond,
-                            pthread_mutex_t * mutex,
-                            unsigned msecs)
-{
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
+/*
+ * for current pending command
+ * these are protected by s_commandmutex
+ */
 
-    ts.tv_sec += msecs / 1000;
-    ts.tv_nsec += (msecs % 1000) * 1000000;
-    return pthread_cond_timedwait(cond, mutex, &ts);
+static pthread_mutex_t s_commandmutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t s_commandcond = PTHREAD_COND_INITIALIZER;
+
+static ATCommandType s_type;
+static const char *s_responsePrefix = NULL;
+static const char *s_smsPDU = NULL;
+static ATResponse *sp_response = NULL;
+
+static void (*s_onTimeout)(void) = NULL;
+static void (*s_onReaderClosed)(void) = NULL;
+static int s_readerClosed;
+
+static void onReaderClosed();
+static int writeCtrlZ (const char *s);
+static int writeline (const char *s);
+
+#ifndef USE_NP
+static void setTimespecRelative(struct timespec *p_ts, long long msec)
+{
+    struct timeval tv;
+
+    gettimeofday(&tv, (struct timezone *) NULL);
+
+    /* what's really funny about this is that I know
+       pthread_cond_timedwait just turns around and makes this
+       a relative time again */
+    p_ts->tv_sec = tv.tv_sec + (msec / 1000);
+    p_ts->tv_nsec = (tv.tv_usec + (msec % 1000) * 1000L ) * 1000L;
 }
-#endif /*HAVE_ANDROID_OS*/
+#endif /*USE_NP*/
 
 static void sleepMsec(long long msec)
 {
@@ -250,38 +131,36 @@ static void sleepMsec(long long msec)
 
 
 
-/** Add an intermediate response to sp_response. */
+/** add an intermediate response to sp_response*/
 static void addIntermediate(const char *line)
 {
     ATLine *p_new;
-    struct atcontext *ac = getAtContext();
 
     p_new = (ATLine  *) malloc(sizeof(ATLine));
 
     p_new->line = strdup(line);
 
-    /* Note: This adds to the head of the list, so the list will
-       be in reverse order of lines received. the order is flipped
-       again before passing on to the command issuer. */
-    p_new->p_next = ac->response->p_intermediates;
-    ac->response->p_intermediates = p_new;
+    /* note: this adds to the head of the list, so the list
+       will be in reverse order of lines received. the order is flipped
+       again before passing on to the command issuer */
+    p_new->p_next = sp_response->p_intermediates;
+    sp_response->p_intermediates = p_new;
 }
 
 
 /**
- * Returns 1 if line is a final response indicating error.
- * See 27.007 annex B.
- * WARNING: NO CARRIER and others are sometimes unsolicited.
+ * returns 1 if line is a final response indicating error
+ * See 27.007 annex B
+ * WARNING: NO CARRIER and others are sometimes unsolicited
  */
 static const char * s_finalResponsesError[] = {
     "ERROR",
     "+CMS ERROR:",
     "+CME ERROR:",
-    "NO CARRIER",      /* Sometimes! */
+    "NO CARRIER", /* sometimes! */
     "NO ANSWER",
     "NO DIALTONE",
 };
-
 static int isFinalResponseError(const char *line)
 {
     size_t i;
@@ -296,13 +175,13 @@ static int isFinalResponseError(const char *line)
 }
 
 /**
- * Returns 1 if line is a final response indicating success.
- * See 27.007 annex B.
- * WARNING: NO CARRIER and others are sometimes unsolicited.
+ * returns 1 if line is a final response indicating success
+ * See 27.007 annex B
+ * WARNING: NO CARRIER and others are sometimes unsolicited
  */
 static const char * s_finalResponsesSuccess[] = {
     "OK",
-    "CONNECT"       /* Some stacks start up data on another channel. */
+    "CONNECT"       /* some stacks start up data on another channel */
 };
 static int isFinalResponseSuccess(const char *line)
 {
@@ -318,8 +197,19 @@ static int isFinalResponseSuccess(const char *line)
 }
 
 /**
- * Returns 1 if line is the first line in (what will be) a two-line
- * SMS unsolicited response.
+ * returns 1 if line is a final response, either  error or success
+ * See 27.007 annex B
+ * WARNING: NO CARRIER and others are sometimes unsolicited
+ */
+static int isFinalResponse(const char *line)
+{
+    return isFinalResponseSuccess(line) || isFinalResponseError(line);
+}
+
+
+/**
+ * returns 1 if line is the first line in (what will be) a two-line
+ * SMS unsolicited response
  */
 static const char * s_smsUnsoliciteds[] = {
     "+CMT:",
@@ -340,90 +230,87 @@ static int isSMSUnsolicited(const char *line)
 }
 
 
-/** Assumes s_commandmutex is held. */
+/** assumes s_commandmutex is held */
 static void handleFinalResponse(const char *line)
 {
-    struct atcontext *ac = getAtContext();
+    sp_response->finalResponse = strdup(line);
 
-    ac->response->finalResponse = strdup(line);
-
-    pthread_cond_signal(&ac->commandcond);
+    pthread_cond_signal(&s_commandcond);
 }
 
 static void handleUnsolicited(const char *line)
 {
-    struct atcontext *ac = getAtContext();
-
-    if (ac->unsolHandler != NULL) {
-        ac->unsolHandler(line, NULL);
+    if (s_unsolHandler != NULL) {
+        s_unsolHandler(line, NULL);
     }
 }
 
 static void processLine(const char *line)
 {
-    struct atcontext *ac = getAtContext();
-    pthread_mutex_lock(&ac->commandmutex);
+    pthread_mutex_lock(&s_commandmutex);
 
-    if (ac->response == NULL) {
-        /* No command pending. */
+    if (sp_response == NULL) {
+        /* no command pending */
         handleUnsolicited(line);
     } else if (isFinalResponseSuccess(line)) {
-        ac->response->success = 1;
+        sp_response->success = 1;
         handleFinalResponse(line);
     } else if (isFinalResponseError(line)) {
-        ac->response->success = 0;
+        sp_response->success = 0;
         handleFinalResponse(line);
-    } else if (ac->smsPDU != NULL && 0 == strcmp(line, "> ")) {
-        /* See eg. TS 27.005 4.3.
-           Commands like AT+CMGS have a "> " prompt. */
-        writeCtrlZ(ac->smsPDU);
-        ac->smsPDU = NULL;
-    } else switch (ac->type) {
+    } else if (s_smsPDU != NULL && 0 == strcmp(line, "> ")) {
+        // See eg. TS 27.005 4.3
+        // Commands like AT+CMGS have a "> " prompt
+        writeCtrlZ(s_smsPDU);
+        s_smsPDU = NULL;
+    } else switch (s_type) {
         case NO_RESULT:
             handleUnsolicited(line);
             break;
         case NUMERIC:
-            if (ac->response->p_intermediates == NULL
-                && isdigit(line[0])) {
+            if (sp_response->p_intermediates == NULL
+                && isdigit(line[0])
+            ) {
                 addIntermediate(line);
             } else {
-                /* Either we already have an intermediate response or
-                   the line doesn't begin with a digit. */
+                /* either we already have an intermediate response or
+                   the line doesn't begin with a digit */
                 handleUnsolicited(line);
             }
             break;
         case SINGLELINE:
-            if (ac->response->p_intermediates == NULL
-                && strStartsWith (line, ac->responsePrefix)) {
+            if (sp_response->p_intermediates == NULL
+                && strStartsWith (line, s_responsePrefix)
+            ) {
                 addIntermediate(line);
             } else {
-                /* We already have an intermediate response. */
+                /* we already have an intermediate response */
                 handleUnsolicited(line);
             }
             break;
         case MULTILINE:
-            if (strStartsWith (line, ac->responsePrefix)) {
+            if (strStartsWith (line, s_responsePrefix)) {
                 addIntermediate(line);
             } else {
                 handleUnsolicited(line);
             }
         break;
 
-        default: /* This should never be reached */
-            LOGE("%s() Unsupported AT command type %d", __func__, ac->type);
+        default: /* this should never be reached */
+            ALOGE("Unsupported AT command type %d\n", s_type);
             handleUnsolicited(line);
         break;
     }
 
-    pthread_mutex_unlock(&ac->commandmutex);
+    pthread_mutex_unlock(&s_commandmutex);
 }
 
 
 /**
- * Returns a pointer to the end of the next line,
- * special-cases the "> " SMS prompt.
+ * Returns a pointer to the end of the next line
+ * special-cases the "> " SMS prompt
  *
- * returns NULL if there is no complete line.
+ * returns NULL if there is no complete line
  */
 static char * findNextEOL(char *cur)
 {
@@ -432,7 +319,7 @@ static char * findNextEOL(char *cur)
         return cur+2;
     }
 
-    /* Find next newline */
+    // Find next newline
     while (*cur != '\0' && *cur != '\r' && *cur != '\n') cur++;
 
     return *cur == '\0' ? NULL : cur;
@@ -441,222 +328,170 @@ static char * findNextEOL(char *cur)
 
 /**
  * Reads a line from the AT channel, returns NULL on timeout.
- * Assumes it has exclusive read access to the FD.
+ * Assumes it has exclusive read access to the FD
  *
- * This line is valid only until the next call to readline.
+ * This line is valid only until the next call to readline
  *
  * This function exists because as of writing, android libc does not
  * have buffered stdio.
  */
 
-static const char *readline(void)
+static const char *readline()
 {
     ssize_t count;
 
     char *p_read = NULL;
     char *p_eol = NULL;
-    char *ret = NULL;
+    char *ret;
 
-    struct atcontext *ac = getAtContext();
-    read(ac->fd,NULL,0);
-
-    /* This is a little odd. I use *s_ATBufferCur == 0 to mean
-     * "buffer consumed completely". If it points to a character,
-     * then the buffer continues until a \0.
+    /* this is a little odd. I use *s_ATBufferCur == 0 to
+     * mean "buffer consumed completely". If it points to a character, than
+     * the buffer continues until a \0
      */
-    if (*ac->ATBufferCur == '\0') {
-        /* Empty buffer. */
-        ac->ATBufferCur = ac->ATBuffer;
-        *ac->ATBufferCur = '\0';
-        p_read = ac->ATBuffer;
+    if (*s_ATBufferCur == '\0') {
+        /* empty buffer */
+        s_ATBufferCur = s_ATBuffer;
+        *s_ATBufferCur = '\0';
+        p_read = s_ATBuffer;
     } else {   /* *s_ATBufferCur != '\0' */
-        /* There's data in the buffer from the last read. */
+        /* there's data in the buffer from the last read */
 
-        /* skip over leading newlines */
-        while (*ac->ATBufferCur == '\r' || *ac->ATBufferCur == '\n')
-            ac->ATBufferCur++;
+        // skip over leading newlines
+        while (*s_ATBufferCur == '\r' || *s_ATBufferCur == '\n')
+            s_ATBufferCur++;
 
-        p_eol = findNextEOL(ac->ATBufferCur);
+        p_eol = findNextEOL(s_ATBufferCur);
 
         if (p_eol == NULL) {
-            /* A partial line. Move it up and prepare to read more. */
+            /* a partial line. move it up and prepare to read more */
             size_t len;
 
-            len = strlen(ac->ATBufferCur);
+            len = strlen(s_ATBufferCur);
 
-            memmove(ac->ATBuffer, ac->ATBufferCur, len + 1);
-            p_read = ac->ATBuffer + len;
-            ac->ATBufferCur = ac->ATBuffer;
+            memmove(s_ATBuffer, s_ATBufferCur, len + 1);
+            p_read = s_ATBuffer + len;
+            s_ATBufferCur = s_ATBuffer;
         }
-        /* Otherwise, (p_eol !- NULL) there is a complete line 
-           that will be returned from the while () loop below. */
+        /* Otherwise, (p_eol !- NULL) there is a complete line  */
+        /* that will be returned the while () loop below        */
     }
 
     while (p_eol == NULL) {
-        int err;
-        struct pollfd pfds[2];
-
-        /* This condition should be synchronized with the read function call
-         * size argument below.
-         */
-        if (0 >= MAX_AT_RESPONSE - (p_read - ac->ATBuffer) - 2) {
-            LOGE("%s() ERROR: Input line exceeded buffer", __func__);
-            /* Ditch buffer and start over again. */
-            ac->ATBufferCur = ac->ATBuffer;
-            *ac->ATBufferCur = '\0';
-            p_read = ac->ATBuffer;
+        if (0 == MAX_AT_RESPONSE - (p_read - s_ATBuffer)) {
+            ALOGE("ERROR: Input line exceeded buffer\n");
+            /* ditch buffer and start over again */
+            s_ATBufferCur = s_ATBuffer;
+            *s_ATBufferCur = '\0';
+            p_read = s_ATBuffer;
         }
 
-        /* If our fd is invalid, we are probably closed. Return. */
-        if (ac->fd < 0)
-            return NULL;
-
-        pfds[0].fd = ac->fd;
-        pfds[0].events = POLLIN | POLLERR;
-
-        pfds[1].fd = ac->readerCmdFds[0];
-        pfds[1].events = POLLIN;
-
-        err = poll(pfds, 2, -1);
-
-        if (err < 0) {
-            LOGE("%s() poll: error: %s", __func__, strerror(errno));
-            return NULL;
-        }
-
-        if (pfds[1].revents & POLLIN) {
-            char buf[10];
-
-            /* Just drain it. We don't care, this is just for waking up. */
-            read(pfds[1].fd, &buf, 1);
-            continue;
-        }
-
-        if (pfds[0].revents & POLLERR) {
-            LOGE("%s() POLLERR event! Returning...", __func__);
-            return NULL;
-        }
-
-        if (!(pfds[0].revents & POLLIN))
-            continue;
-
-        do
-            /* The size argument should be synchronized to the ditch buffer
-             * condition above.
-             */
-            count = read(ac->fd, p_read,
-                         MAX_AT_RESPONSE - (p_read - ac->ATBuffer) - 2);
-
-        while (count < 0 && errno == EINTR);
+        do {
+            count = read(s_fd, p_read,
+                            MAX_AT_RESPONSE - (p_read - s_ATBuffer));
+        } while (count < 0 && errno == EINTR);
 
         if (count > 0) {
             AT_DUMP( "<< ", p_read, count );
-            ac->readCount += count;
+            s_readCount += count;
 
-            /* Implementation requires extra EOS or EOL to get it right if
-             * there are no trailing newlines in the read buffer. Adding extra
-             * EOS does not harm even if there actually were trailing EOLs.
-             */
             p_read[count] = '\0';
-            p_read[count+1] = '\0';
 
-            /* Skip over leading newlines. */
-            while (*ac->ATBufferCur == '\r' || *ac->ATBufferCur == '\n')
-                ac->ATBufferCur++;
+            // skip over leading newlines
+            while (*s_ATBufferCur == '\r' || *s_ATBufferCur == '\n')
+                s_ATBufferCur++;
 
-            p_eol = findNextEOL(ac->ATBufferCur);
+            p_eol = findNextEOL(s_ATBufferCur);
             p_read += count;
         } else if (count <= 0) {
-            /* Read error encountered or EOF reached. */
-            if (count == 0)
-                LOGD("%s() atchannel: EOF reached.", __func__);
-            else
-                LOGD("%s() atchannel: read error %s", __func__, strerror(errno));
-
+            /* read error encountered or EOF reached */
+            if(count == 0) {
+                ALOGD("atchannel: EOF reached");
+            } else {
+                ALOGD("atchannel: read error %s", strerror(errno));
+            }
             return NULL;
         }
     }
 
-    /* A full line in the buffer. Place a \0 over the \r and return. */
+    /* a full line in the buffer. Place a \0 over the \r and return */
 
-    ret = ac->ATBufferCur;
+    ret = s_ATBufferCur;
     *p_eol = '\0';
+    s_ATBufferCur = p_eol + 1; /* this will always be <= p_read,    */
+                              /* and there will be a \0 at *p_read */
 
-    /* The extra EOS added after read takes care of the case when there is no
-     * valid data after p_eol.
-     */
-    ac->ATBufferCur = p_eol + 1;     /* This will always be <= p_read,    
-                                        and there will be a \0 at *p_read. */
-
-    LOGI("AT(%d)< %s", ac->fd, ret);
+    ALOGD("AT< %s\n", ret);
     return ret;
 }
 
-static void onReaderClosed(void)
+
+static void onReaderClosed()
 {
-    struct atcontext *ac = getAtContext();
-    if (ac->onReaderClosed != NULL && ac->readerClosed == 0) {
+    if (s_onReaderClosed != NULL && s_readerClosed == 0) {
 
-        pthread_mutex_lock(&ac->commandmutex);
+        pthread_mutex_lock(&s_commandmutex);
 
-        ac->readerClosed = 1;
+        s_readerClosed = 1;
 
-        pthread_cond_signal(&ac->commandcond);
+        pthread_cond_signal(&s_commandcond);
 
-        pthread_mutex_unlock(&ac->commandmutex);
+        pthread_mutex_unlock(&s_commandmutex);
 
-        ac->onReaderClosed();
+        s_onReaderClosed();
     }
 }
 
+
 static void *readerLoop(void *arg)
 {
-    struct atcontext *ac = NULL;
-
-    LOGI("Entering readerloop!");
-
-    setAtContext((struct atcontext *) arg);
-    ac = getAtContext();
-
     for (;;) {
         const char * line;
 
         line = readline();
 
-        if (line == NULL)
+        if (line == NULL) {
             break;
+        }
 
         if(isSMSUnsolicited(line)) {
             char *line1;
             const char *line2;
 
-            /* The scope of string returned by 'readline()' is valid only
-               until next call to 'readline()' hence making a copy of line
-               before calling readline again. */
+            // The scope of string returned by 'readline()' is valid only
+            // till next call to 'readline()' hence making a copy of line
+            // before calling readline again.
             line1 = strdup(line);
             line2 = readline();
 
             if (line2 == NULL) {
-                free(line1);
                 break;
             }
 
-            if (ac->unsolHandler != NULL)
-                ac->unsolHandler(line1, line2);
-
+            if (s_unsolHandler != NULL) {
+                s_unsolHandler (line1, line2);
+            }
             free(line1);
-        } else
+        } else {
             processLine(line);
         }
 
+#ifdef HAVE_ANDROID_OS
+        if (s_ackPowerIoctl > 0) {
+            /* acknowledge that bytes have been read and processed */
+            ioctl(s_fd, OMAP_CSMI_TTY_ACK, &s_readCount);
+            s_readCount = 0;
+        }
+#endif /*HAVE_ANDROID_OS*/
+    }
+
     onReaderClosed();
-    LOGI("Exiting readerloop!");
+
     return NULL;
 }
 
 /**
  * Sends string s to the radio with a \r appended.
- * Returns AT_ERROR_* on error, 0 on success.
+ * Returns AT_ERROR_* on error, 0 on success
  *
  * This function exists because as of writing, android libc does not
  * have buffered stdio.
@@ -667,20 +502,18 @@ static int writeline (const char *s)
     size_t len = strlen(s);
     ssize_t written;
 
-    struct atcontext *ac = getAtContext();
-
-    if (ac->fd < 0 || ac->readerClosed > 0) {
+    if (s_fd < 0 || s_readerClosed > 0) {
         return AT_ERROR_CHANNEL_CLOSED;
     }
 
-    LOGD("AT(%d)> %s", ac->fd, s);
+    ALOGD("AT> %s\n", s);
 
     AT_DUMP( ">> ", s, strlen(s) );
 
-    /* The main string. */
+    /* the main string */
     while (cur < len) {
         do {
-            written = write (ac->fd, s + cur, len - cur);
+            written = write (s_fd, s + cur, len - cur);
         } while (written < 0 && errno == EINTR);
 
         if (written < 0) {
@@ -690,10 +523,49 @@ static int writeline (const char *s)
         cur += written;
     }
 
-    /* The \r  */
+    /* the \r  */
 
     do {
-        written = write (ac->fd, "\r" , 1);
+        written = write (s_fd, "\r" , 1);
+    } while ((written < 0 && errno == EINTR) || (written == 0));
+
+    if (written < 0) {
+        return AT_ERROR_GENERIC;
+    }
+
+    return 0;
+}
+static int writeCtrlZ (const char *s)
+{
+    size_t cur = 0;
+    size_t len = strlen(s);
+    ssize_t written;
+
+    if (s_fd < 0 || s_readerClosed > 0) {
+        return AT_ERROR_CHANNEL_CLOSED;
+    }
+
+    ALOGD("AT> %s^Z\n", s);
+
+    AT_DUMP( ">* ", s, strlen(s) );
+
+    /* the main string */
+    while (cur < len) {
+        do {
+            written = write (s_fd, s + cur, len - cur);
+        } while (written < 0 && errno == EINTR);
+
+        if (written < 0) {
+            return AT_ERROR_GENERIC;
+        }
+
+        cur += written;
+    }
+
+    /* the ^Z  */
+
+    do {
+        written = write (s_fd, "\032" , 1);
     } while ((written < 0 && errno == EINTR) || (written == 0));
 
     if (written < 0) {
@@ -703,183 +575,104 @@ static int writeline (const char *s)
     return 0;
 }
 
-static int writeCtrlZ (const char *s)
+static void clearPendingCommand()
 {
-    size_t cur = 0;
-    size_t len = strlen(s);
-    ssize_t written;
-
-    struct atcontext *ac = getAtContext();
-
-    if (ac->fd < 0 || ac->readerClosed > 0)
-        return AT_ERROR_CHANNEL_CLOSED;
-
-    LOGD("AT> %s^Z\n", s);
-
-    AT_DUMP( ">* ", s, strlen(s) );
-
-    /* The main string. */
-    while (cur < len) {
-        do {
-            written = write (ac->fd, s + cur, len - cur);
-        } while (written < 0 && errno == EINTR);
-
-        if (written < 0)
-            return AT_ERROR_GENERIC;
-
-        cur += written;
+    if (sp_response != NULL) {
+        at_response_free(sp_response);
     }
 
-    /* the ^Z  */
-    do {
-        written = write (ac->fd, "\032" , 1);
-    } while ((written < 0 && errno == EINTR) || (written == 0));
-
-    if (written < 0)
-        return AT_ERROR_GENERIC;
-
-    return 0;
+    sp_response = NULL;
+    s_responsePrefix = NULL;
+    s_smsPDU = NULL;
 }
 
-static void clearPendingCommand(void)
-{
-    struct atcontext *ac = getAtContext();
-
-    if (ac->response != NULL)
-        at_response_free(ac->response);
-
-    ac->response = NULL;
-    ac->responsePrefix = NULL;
-    ac->smsPDU = NULL;
-    }
-
-static AT_Error merror(int type, int error)
-{
-    switch(type) {
-    case AT_ERROR :
-        return (AT_Error)(AT_ERROR_BASE + error);
-    case CME_ERROR :
-        return (AT_Error)(CME_ERROR_BASE + error);
-    case CMS_ERROR:
-        return (AT_Error)(CMS_ERROR_BASE + error);
-    case GENERIC_ERROR:
-        return (AT_Error)(GENERIC_ERROR_BASE + error);
-    default:
-        return (AT_Error)(GENERIC_ERROR_UNSPECIFIED);
-    }
-}
-
-static AT_Error at_get_error(const ATResponse *p_response)
-{
-    int ret;
-    int err;
-    char *p_cur;
-
-    if (p_response == NULL)
-        return merror(GENERIC_ERROR, GENERIC_ERROR_UNSPECIFIED);
-
-    if (p_response->success > 0)
-        return AT_NOERROR;
-
-    if (p_response->finalResponse == NULL)
-        return AT_ERROR_INVALID_RESPONSE;
-
-    if (isFinalResponseSuccess(p_response->finalResponse))
-        return AT_NOERROR;
-
-    p_cur = p_response->finalResponse;
-    err = at_tok_start(&p_cur);
-    if (err < 0)
-        return merror(GENERIC_ERROR, GENERIC_ERROR_UNSPECIFIED);
-
-    err = at_tok_nextint(&p_cur, &ret);
-    if (err < 0)
-        return merror(GENERIC_ERROR, GENERIC_ERROR_UNSPECIFIED);
-
-    if(strStartsWith(p_response->finalResponse, "+CME ERROR:"))
-        return merror(CME_ERROR, ret);
-    else if (strStartsWith(p_response->finalResponse, "+CMS ERROR:"))
-        return merror(CMS_ERROR, ret);
-    else if (strStartsWith(p_response->finalResponse, "ERROR:"))
-        return merror(GENERIC_ERROR, GENERIC_ERROR_RESPONSE);
-    else if (strStartsWith(p_response->finalResponse, "+NO CARRIER:"))
-        return merror(GENERIC_ERROR, GENERIC_NO_CARRIER_RESPONSE);
-    else if (strStartsWith(p_response->finalResponse, "+NO ANSWER:"))
-        return merror(GENERIC_ERROR, GENERIC_NO_ANSWER_RESPONSE);
-    else if (strStartsWith(p_response->finalResponse, "+NO DIALTONE:"))
-        return merror(GENERIC_ERROR, GENERIC_NO_DIALTONE_RESPONSE);
-    else
-        return merror(GENERIC_ERROR, GENERIC_ERROR_UNSPECIFIED);
-}
 
 /**
- * Starts AT handler on stream "fd'.
- * returns 0 on success, -1 on error.
+ * Starts AT handler on stream "fd'
+ * returns 0 on success, -1 on error
  */
 int at_open(int fd, ATUnsolHandler h)
 {
     int ret;
+    pthread_t tid;
     pthread_attr_t attr;
 
-    struct atcontext *ac = NULL;
+    s_fd = fd;
+    s_unsolHandler = h;
+    s_readerClosed = 0;
 
-    if (initializeAtContext()) {
-        LOGE("%s() InitializeAtContext failed!", __func__);
-        goto error;
+    s_responsePrefix = NULL;
+    s_smsPDU = NULL;
+    sp_response = NULL;
+
+    /* Android power control ioctl */
+#ifdef HAVE_ANDROID_OS
+#ifdef OMAP_CSMI_POWER_CONTROL
+    ret = ioctl(fd, OMAP_CSMI_TTY_ENABLE_ACK);
+    if(ret == 0) {
+        int ack_count;
+		int read_count;
+        int old_flags;
+        char sync_buf[256];
+        old_flags = fcntl(fd, F_GETFL, 0);
+        fcntl(fd, F_SETFL, old_flags | O_NONBLOCK);
+        do {
+            ioctl(fd, OMAP_CSMI_TTY_READ_UNACKED, &ack_count);
+			read_count = 0;
+            do {
+                ret = read(fd, sync_buf, sizeof(sync_buf));
+				if(ret > 0)
+					read_count += ret;
+            } while(ret > 0 || (ret < 0 && errno == EINTR));
+            ioctl(fd, OMAP_CSMI_TTY_ACK, &ack_count);
+         } while(ack_count > 0 || read_count > 0);
+        fcntl(fd, F_SETFL, old_flags);
+        s_readCount = 0;
+        s_ackPowerIoctl = 1;
     }
+    else
+        s_ackPowerIoctl = 0;
 
-    ac = getAtContext();
+#else // OMAP_CSMI_POWER_CONTROL
+    s_ackPowerIoctl = 0;
 
-    ac->fd = fd;
-    ac->isInitialized = 1;
-    ac->unsolHandler = h;
-    ac->readerClosed = 0;
-
-    ac->responsePrefix = NULL;
-    ac->smsPDU = NULL;
-    ac->response = NULL;
+#endif // OMAP_CSMI_POWER_CONTROL
+#endif /*HAVE_ANDROID_OS*/
 
     pthread_attr_init (&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-    ret = pthread_create(&ac->tid_reader, &attr, readerLoop, ac);
+    ret = pthread_create(&s_tid_reader, &attr, readerLoop, &attr);
 
     if (ret < 0) {
         perror ("pthread_create");
-        goto error;
+        return -1;
     }
 
 
     return 0;
-error:
-    ac_free();
-    return -1;
 }
 
 /* FIXME is it ok to call this from the reader and the command thread? */
-void at_close(void)
+void at_close()
 {
-    struct atcontext *ac = getAtContext();
-
-    if (ac->fd >= 0) {
-        if (close(ac->fd) != 0)
-            LOGE("%s() FAILED to close fd %d!", __func__, ac->fd);
+    if (s_fd >= 0) {
+        close(s_fd);
     }
-    ac->fd = -1;
+    s_fd = -1;
 
-    pthread_mutex_lock(&ac->commandmutex);
+    pthread_mutex_lock(&s_commandmutex);
 
-    ac->readerClosed = 1;
+    s_readerClosed = 1;
 
-    pthread_cond_signal(&ac->commandcond);
+    pthread_cond_signal(&s_commandcond);
 
-    pthread_mutex_unlock(&ac->commandmutex);
+    pthread_mutex_unlock(&s_commandmutex);
 
-    /* Kick readerloop. */
-    write(ac->readerCmdFds[1], "x", 1);
+    /* the reader thread should eventually die */
 }
 
-static ATResponse *at_response_new(void)
+static ATResponse * at_response_new()
 {
     return (ATResponse *) calloc(1, sizeof(ATResponse));
 }
@@ -907,8 +700,8 @@ void at_response_free(ATResponse *p_response)
 }
 
 /**
- * The line reader places the intermediate responses in reverse order,
- * here we flip them back.
+ * The line reader places the intermediate responses in reverse order
+ * here we flip them back
  */
 static void reverseIntermediates(ATResponse *p_response)
 {
@@ -926,242 +719,187 @@ static void reverseIntermediates(ATResponse *p_response)
 }
 
 /**
- * Internal send_command implementation.
- * Doesn't lock or call the timeout callback.
+ * Internal send_command implementation
+ * Doesn't lock or call the timeout callback
  *
- * timeoutMsec == 0 means infinite timeout.
+ * timeoutMsec == 0 means infinite timeout
  */
+
 static int at_send_command_full_nolock (const char *command, ATCommandType type,
                     const char *responsePrefix, const char *smspdu,
                     long long timeoutMsec, ATResponse **pp_outResponse)
 {
-    int err = AT_NOERROR;
+    int err = 0;
+#ifndef USE_NP
+    struct timespec ts;
+#endif /*USE_NP*/
 
-    struct atcontext *ac = getAtContext();
-
-    /* Default to NULL, to allow caller to free securely even if
-     * no response will be set below */
-    if (pp_outResponse != NULL)
-        *pp_outResponse = NULL;
-
-    /* FIXME This is to prevent future problems due to calls from other threads; should be revised. */
-    while (pthread_mutex_trylock(&ac->requestmutex) == EBUSY)
-        pthread_cond_wait(&ac->requestcond, &ac->commandmutex);
-
-    if(ac->response != NULL) {
+    if(sp_response != NULL) {
         err = AT_ERROR_COMMAND_PENDING;
-        goto finally;
-    }
-
-    ac->type = type;
-    ac->responsePrefix = responsePrefix;
-    ac->smsPDU = smspdu;
-    ac->response = at_response_new();
-    if (ac->response == NULL) {
-        err = AT_ERROR_MEMORY_ALLOCATION;
-        goto finally;
+        goto error;
     }
 
     err = writeline (command);
 
-    if (err != AT_NOERROR)
-        goto finally;
+    if (err < 0) {
+        goto error;
+    }
 
-    while (ac->response->finalResponse == NULL && ac->readerClosed == 0) {
-        if (timeoutMsec != 0)
-            err = pthread_cond_timeout_np(&ac->commandcond, &ac->commandmutex, timeoutMsec);
-        else
-            err = pthread_cond_wait(&ac->commandcond, &ac->commandmutex);
+    s_type = type;
+    s_responsePrefix = responsePrefix;
+    s_smsPDU = smspdu;
+    sp_response = at_response_new();
+
+#ifndef USE_NP
+    if (timeoutMsec != 0) {
+        setTimespecRelative(&ts, timeoutMsec);
+    }
+#endif /*USE_NP*/
+
+    while (sp_response->finalResponse == NULL && s_readerClosed == 0) {
+        if (timeoutMsec != 0) {
+#ifdef USE_NP
+            err = pthread_cond_timeout_np(&s_commandcond, &s_commandmutex, timeoutMsec);
+#else
+            err = pthread_cond_timedwait(&s_commandcond, &s_commandmutex, &ts);
+#endif /*USE_NP*/
+        } else {
+            err = pthread_cond_wait(&s_commandcond, &s_commandmutex);
+        }
 
         if (err == ETIMEDOUT) {
             err = AT_ERROR_TIMEOUT;
-            goto finally;
+            goto error;
         }
-        }
-
-    if (ac->response->success == 0) {
-        err = at_get_error(ac->response);
     }
 
-    if (pp_outResponse == NULL)
-        at_response_free(ac->response);
-    else {
-        /* Line reader stores intermediate responses in reverse order. */
-        reverseIntermediates(ac->response);
-        *pp_outResponse = ac->response;
+    if (pp_outResponse == NULL) {
+        at_response_free(sp_response);
+    } else {
+        /* line reader stores intermediate responses in reverse order */
+        reverseIntermediates(sp_response);
+        *pp_outResponse = sp_response;
     }
 
-    ac->response = NULL;
+    sp_response = NULL;
 
-    if(ac->readerClosed > 0) {
+    if(s_readerClosed > 0) {
         err = AT_ERROR_CHANNEL_CLOSED;
-        goto finally;
+        goto error;
     }
 
-finally:
+    err = 0;
+error:
     clearPendingCommand();
-
-    pthread_cond_broadcast(&ac->requestcond);
-    pthread_mutex_unlock(&ac->requestmutex);
 
     return err;
 }
 
 /**
- * Internal send_command implementation.
+ * Internal send_command implementation
  *
- * timeoutMsec == 0 means infinite timeout.
+ * timeoutMsec == 0 means infinite timeout
  */
 static int at_send_command_full (const char *command, ATCommandType type,
                     const char *responsePrefix, const char *smspdu,
-                    long long timeoutMsec, ATResponse **pp_outResponse, int useap, va_list ap)
+                    long long timeoutMsec, ATResponse **pp_outResponse)
 {
     int err;
 
-    struct atcontext *ac = getAtContext();
-    static char strbuf[BUFFSIZE];
-    const char *ptr;
-
-    if (0 != pthread_equal(ac->tid_reader, pthread_self()))
-        /* Cannot be called from reader thread. */
+    if (0 != pthread_equal(s_tid_reader, pthread_self())) {
+        /* cannot be called from reader thread */
         return AT_ERROR_INVALID_THREAD;
-
-    pthread_mutex_lock(&ac->commandmutex);
-    if (useap) {
-        if (!vsnprintf(strbuf, BUFFSIZE, command, ap)) {
-           pthread_mutex_unlock(&ac->commandmutex);
-           return AT_ERROR_STRING_CREATION;
     }
-        ptr = strbuf;
-    } else
-        ptr = command;
 
-    err = at_send_command_full_nolock(ptr, type,
+    pthread_mutex_lock(&s_commandmutex);
+
+    err = at_send_command_full_nolock(command, type,
                     responsePrefix, smspdu,
                     timeoutMsec, pp_outResponse);
 
-    pthread_mutex_unlock(&ac->commandmutex);
+    pthread_mutex_unlock(&s_commandmutex);
 
-    if (err == AT_ERROR_TIMEOUT && ac->onTimeout != NULL)
-        ac->onTimeout();
+    if (err == AT_ERROR_TIMEOUT && s_onTimeout != NULL) {
+        s_onTimeout();
+    }
 
     return err;
 }
 
-/* Only call this from onTimeout, since we're not locking or anything. */
-void at_send_escape (void)
-{
-    struct atcontext *ac = getAtContext();
-    int written;
-
-    do
-        written = write (ac->fd, "\033" , 1);
-    while ((written < 0 && errno == EINTR) || (written == 0));
-}
 
 /**
- * Issue a single normal AT command with no intermediate response expected.
+ * Issue a single normal AT command with no intermediate response expected
  *
- * "command" should not include \r.
+ * "command" should not include \r
+ * pp_outResponse can be NULL
+ *
+ * if non-NULL, the resulting ATResponse * must be eventually freed with
+ * at_response_free
  */
-int at_send_command (const char *command, ...)
+int at_send_command (const char *command, ATResponse **pp_outResponse)
 {
     int err;
-
-    struct atcontext *ac = getAtContext();
-    va_list ap;
-    va_start(ap, command);
 
     err = at_send_command_full (command, NO_RESULT, NULL,
-            NULL, ac->timeoutMsec, NULL, 1, ap);
-    va_end(ap);
+                                    NULL, 0, pp_outResponse);
 
-    if (err != AT_NOERROR)
-        LOGI(" --- %s", at_str_err(-err));
-
-    return -err;
+    return err;
 }
 
-int at_send_command_raw (const char *command, ATResponse **pp_outResponse)
+
+int at_send_command_timeout (const char *command, long long timeout, ATResponse **pp_outResponse)
 {
-    struct atcontext *ac = getAtContext();
     int err;
 
-    err = at_send_command_full (command, MULTILINE, "",
-            NULL, ac->timeoutMsec, pp_outResponse, 0, empty);
+    err = at_send_command_full (command, NO_RESULT, NULL,
+                                    NULL, timeout, pp_outResponse);
 
-    /* Don't check for intermediate responses as it is unknown if any
-     * intermediate responses are expected. Don't free the response, instead,
-     * let calling function free the allocated response.
-     */
-
-    if (err != AT_NOERROR)
-        LOGI(" --- %s", at_str_err(-err));
-
-    return -err;
+    return err;
 }
+
 
 int at_send_command_singleline (const char *command,
                                 const char *responsePrefix,
-                                 ATResponse **pp_outResponse, ...)
+                                 ATResponse **pp_outResponse)
 {
     int err;
 
-    struct atcontext *ac = getAtContext();
-    va_list ap;
-    va_start(ap, pp_outResponse);
-
     err = at_send_command_full (command, SINGLELINE, responsePrefix,
-                                    NULL, ac->timeoutMsec, pp_outResponse, 1, ap);
+                                    NULL, 0, pp_outResponse);
 
-    if (err == AT_NOERROR && pp_outResponse != NULL
-            && (*pp_outResponse) != NULL
-            && (*pp_outResponse)->p_intermediates == NULL)
-        /* Command with pp_outResponse must have an intermediate response */
-        err = AT_ERROR_INVALID_RESPONSE;
-
-    /* Free response in case of error */
-    if (err != AT_NOERROR && pp_outResponse != NULL
-            && (*pp_outResponse) != NULL) {
+    if (err == 0 && pp_outResponse != NULL
+        && (*pp_outResponse)->success > 0
+        && (*pp_outResponse)->p_intermediates == NULL
+    ) {
+        /* successful command must have an intermediate response */
         at_response_free(*pp_outResponse);
         *pp_outResponse = NULL;
+        return AT_ERROR_INVALID_RESPONSE;
     }
 
-    va_end(ap);
-
-    if (err != AT_NOERROR)
-        LOGI(" --- %s", at_str_err(-err));
-
-    return -err;
+    return err;
 }
+
 
 int at_send_command_numeric (const char *command,
                                  ATResponse **pp_outResponse)
 {
     int err;
 
-    struct atcontext *ac = getAtContext();
-
     err = at_send_command_full (command, NUMERIC, NULL,
-                                NULL, ac->timeoutMsec, pp_outResponse, 0, empty);
+                                    NULL, 0, pp_outResponse);
 
-    if (err == AT_NOERROR && pp_outResponse != NULL
-            && (*pp_outResponse) != NULL
-            && (*pp_outResponse)->p_intermediates == NULL)
-        /* Command with pp_outResponse must have an intermediate response */
-        err = AT_ERROR_INVALID_RESPONSE;
-
-    /* Free response in case of error */
-    if (err != AT_NOERROR && pp_outResponse != NULL
-            && (*pp_outResponse) != NULL) {
+    if (err == 0 && pp_outResponse != NULL
+        && (*pp_outResponse)->success > 0
+        && (*pp_outResponse)->p_intermediates == NULL
+    ) {
+        /* successful command must have an intermediate response */
         at_response_free(*pp_outResponse);
         *pp_outResponse = NULL;
+        return AT_ERROR_INVALID_RESPONSE;
     }
 
-    if (err != AT_NOERROR)
-        LOGI(" --- %s", at_str_err(-err));
-
-    return -err;
+    return err;
 }
 
 
@@ -1172,206 +910,127 @@ int at_send_command_sms (const char *command,
 {
     int err;
 
-    struct atcontext *ac = getAtContext();
-
     err = at_send_command_full (command, SINGLELINE, responsePrefix,
-                                    pdu, ac->timeoutMsec, pp_outResponse, 0, empty);
+                                    pdu, 0, pp_outResponse);
 
-    if (err == AT_NOERROR && pp_outResponse != NULL
-            && (*pp_outResponse) != NULL
-            && (*pp_outResponse)->p_intermediates == NULL)
-        /* Command with pp_outResponse must have an intermediate response */
-        err = AT_ERROR_INVALID_RESPONSE;
-
-    /* Free response in case of error */
-    if (err != AT_NOERROR && pp_outResponse != NULL
-            && (*pp_outResponse) != NULL) {
+    if (err == 0 && pp_outResponse != NULL
+        && (*pp_outResponse)->success > 0
+        && (*pp_outResponse)->p_intermediates == NULL
+    ) {
+        /* successful command must have an intermediate response */
         at_response_free(*pp_outResponse);
         *pp_outResponse = NULL;
+        return AT_ERROR_INVALID_RESPONSE;
     }
 
-    if (err != AT_NOERROR)
-        LOGI(" --- %s", at_str_err(-err));
-
-    return -err;
+    return err;
 }
 
 
 int at_send_command_multiline (const char *command,
                                 const char *responsePrefix,
-                                 ATResponse **pp_outResponse, ...)
+                                 ATResponse **pp_outResponse)
 {
     int err;
 
-    struct atcontext *ac = getAtContext();
-    va_list ap;
-    va_start(ap, pp_outResponse);
-
     err = at_send_command_full (command, MULTILINE, responsePrefix,
-                                    NULL, ac->timeoutMsec, pp_outResponse, 1, ap);
-    va_end(ap);
+                                    NULL, 0, pp_outResponse);
 
-    /* Free response in case of error */
-    if (err != AT_NOERROR && pp_outResponse != NULL
-            && (*pp_outResponse) != NULL) {
-        at_response_free(*pp_outResponse);
-        *pp_outResponse = NULL;
-    }
+    return err;
+}
 
-    if (err != AT_NOERROR)
-        LOGI(" --- %s", at_str_err(-err));
 
-    return -err;
+/** This callback is invoked on the command thread */
+void at_set_on_timeout(void (*onTimeout)(void))
+{
+    s_onTimeout = onTimeout;
 }
 
 /**
- * Set the default timeout. Let it be reasonably high, some commands
- * take their time. Default is 10 minutes.
+ *  This callback is invoked on the reader thread (like ATUnsolHandler)
+ *  when the input stream closes before you call at_close
+ *  (not when you call at_close())
+ *  You should still call at_close()
  */
-void at_set_timeout_msec(int timeout)
-{
-    struct atcontext *ac = getAtContext();
 
-    ac->timeoutMsec = timeout;
-}
-
-/** This callback is invoked on the command thread. */
-void at_set_on_timeout(void (*onTimeout)(void))
-{
-    struct atcontext *ac = getAtContext();
-
-    ac->onTimeout = onTimeout;
-}
-
-
-/*
- * This callback is invoked on the reader thread (like ATUnsolHandler), when the
- * input stream closes before you call at_close (not when you call at_close()).
- * You should still call at_close(). It may also be invoked immediately from the
- * current thread if the read channel is already closed.
- */
 void at_set_on_reader_closed(void (*onClose)(void))
 {
-    struct atcontext *ac = getAtContext();
-
-    ac->onReaderClosed = onClose;
+    s_onReaderClosed = onClose;
 }
 
 
 /**
  * Periodically issue an AT command and wait for a response.
- * Used to ensure channel has start up and is active.
+ * Used to ensure channel has start up and is active
  */
-int at_handshake(void)
+
+int at_handshake()
 {
     int i;
     int err = 0;
 
-    struct atcontext *ac = getAtContext();
-
-    if (0 != pthread_equal(ac->tid_reader, pthread_self()))
-        /* Cannot be called from reader thread. */
+    if (0 != pthread_equal(s_tid_reader, pthread_self())) {
+        /* cannot be called from reader thread */
         return AT_ERROR_INVALID_THREAD;
+    }
 
-    pthread_mutex_lock(&ac->commandmutex);
+    pthread_mutex_lock(&s_commandmutex);
 
     for (i = 0 ; i < HANDSHAKE_RETRY_COUNT ; i++) {
-        /* Some stacks start with verbose off. */
+        /* some stacks start with verbose off */
         err = at_send_command_full_nolock ("ATE0Q0V1", NO_RESULT,
                     NULL, NULL, HANDSHAKE_TIMEOUT_MSEC, NULL);
 
-        if (err == 0)
+        if (err == 0) {
             break;
+        }
     }
 
     if (err == 0) {
-        /* Pause for a bit to let the input buffer drain any unmatched OK's
-           (they will appear as extraneous unsolicited responses). */
-        LOGD("%s() pausing %d ms to drain unmatched OK's...",
-             __func__, HANDSHAKE_TIMEOUT_MSEC);
+        /* pause for a bit to let the input buffer drain any unmatched OK's
+           (they will appear as extraneous unsolicited responses) */
+
         sleepMsec(HANDSHAKE_TIMEOUT_MSEC);
     }
 
-    pthread_mutex_unlock(&ac->commandmutex);
+    pthread_mutex_unlock(&s_commandmutex);
 
     return err;
 }
 
-AT_Error at_get_at_error(int error)
+/**
+ * Returns error code from response
+ * Assumes AT+CMEE=1 (numeric) mode
+ */
+AT_CME_Error at_get_cme_error(const ATResponse *p_response)
 {
-    error = -error;
-    if (error >= AT_ERROR_BASE && error < AT_ERROR_TOP)
-        return (AT_Error)(error - AT_ERROR_BASE);
-    else
-        return AT_ERROR_NON_AT;
+    int ret;
+    int err;
+    char *p_cur;
+
+    if (p_response->success > 0) {
+        return CME_SUCCESS;
     }
 
-AT_CME_Error at_get_cme_error(int error)
-{
-    error = -error;
-    if (error >= CME_ERROR_BASE && error < CME_ERROR_TOP)
-        return (AT_CME_Error)(error - CME_ERROR_BASE);
-    else
+    if (p_response->finalResponse == NULL
+        || !strStartsWith(p_response->finalResponse, "+CME ERROR:")
+    ) {
         return CME_ERROR_NON_CME;
     }
 
-AT_CMS_Error at_get_cms_error(int error)
-{
-    error = -error;
-    if (error >= CMS_ERROR_BASE && error < CMS_ERROR_TOP)
-        return (AT_CMS_Error)(error - CMS_ERROR_BASE);
-    else
-        return CMS_ERROR_NON_CMS;
-}
+    p_cur = p_response->finalResponse;
+    err = at_tok_start(&p_cur);
 
-AT_Generic_Error at_get_generic_error(int error)
-{
-    error = -error;
-    if (error >= GENERIC_ERROR_BASE && error < GENERIC_ERROR_TOP)
-        return (AT_Generic_Error)(error - GENERIC_ERROR_BASE);
-    else
-        return GENERIC_ERROR_NON_GENERIC;
+    if (err < 0) {
+        return CME_ERROR_NON_CME;
     }
 
-AT_Error_type at_get_error_type(int error)
-{
-    error = -error;
-    if (error == AT_NOERROR)
-        return NONE_ERROR;
+    err = at_tok_nextint(&p_cur, &ret);
 
-    if (error > AT_ERROR_BASE && error <= AT_ERROR_TOP)
-        return AT_ERROR;
-
-    if (error >= CME_ERROR_BASE && error <= CME_ERROR_TOP)
-        return CME_ERROR;
-
-    if (error >= CMS_ERROR_BASE && error <= CMS_ERROR_TOP)
-        return CMS_ERROR;
-
-    if (error >= GENERIC_ERROR_BASE && error <= GENERIC_ERROR_TOP)
-        return GENERIC_ERROR;
-
-    return UNKNOWN_ERROR;
+    if (err < 0) {
+        return CME_ERROR_NON_CME;
     }
 
-#define quote(x) #x
-
-const char *at_str_err(int error) 
-{
-    const char *s = "--UNKNOWN--";
-
-    error = -error;
-    switch(error) {
-#define AT(name, num) case num + AT_ERROR_BASE: s = quote(AT_##name); break;
-#define CME(name, num) case num + CME_ERROR_BASE: s = quote(CME_##name); break;
-#define CMS(name, num) case num + CMS_ERROR_BASE: s = quote(CMS_##name); break;
-#define GENERIC(name, num) case num + GENERIC_ERROR_BASE: s = quote(GENERIC_##name); break;
-    mbm_error
-#undef AT
-#undef CME
-#undef CMS
-#undef GENERIC
+    return (AT_CME_Error) ret;
 }
 
-    return s;
-}

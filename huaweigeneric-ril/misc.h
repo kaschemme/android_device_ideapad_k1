@@ -15,39 +15,5 @@
 ** limitations under the License.
 */
 
-#ifndef _MISC_H
-#define _MISC_H 1
-
-struct tlv {
-    unsigned    tag;
-    const char *data;
-    const char *end;
-};
-
-/** Returns 1 if line starts with prefix, 0 if it does not. */
+/** returns 1 if line starts with prefix, 0 if it does not */
 int strStartsWith(const char *line, const char *prefix);
-
-char *getFirstElementValue(const char* document,
-                           const char* elementBeginTag,
-                           const char* elementEndTag,
-                           char** remainingDocument);
-
-char char2nib(char c);
-
-int stringToBinary(/*in*/ const char *string,
-                   /*in*/ size_t len,
-                   /*out*/ unsigned char *binary);
-
-int binaryToString(/*in*/ const unsigned char *binary,
-                   /*in*/ size_t len,
-                   /*out*/ char *string);
-
-int parseTlv(/*in*/ const char *stream,
-             /*in*/ const char *end,
-             /*out*/ struct tlv *tlv);
-#define TLV_DATA(tlv, pos) (((unsigned)char2nib(tlv.data[(pos) * 2 + 0]) << 4) | \
-                            ((unsigned)char2nib(tlv.data[(pos) * 2 + 1]) << 0))
-
-#define NUM_ELEMS(x) (sizeof(x) / sizeof(x[0]))
-
-#endif
