@@ -118,6 +118,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.touchscreen.xml:system/etc/permissions/android.hardware.touchscreen.xml \
     frameworks/native/data/etc/android.hardware.sensor.barometer.xml:system/etc/permissions/android.hardware.sensor.barometer.xml \
     frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
+    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
     packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml
 
 #/system/etc/ppp
@@ -236,6 +237,9 @@ PRODUCT_COPY_FILES += \
 
 #/system/lib/modules
 PRODUCT_COPY_FILES += \
+    device/lenovo/k1/prebuilt/cifs.ko:system/lib/modules/cifs.ko \
+    device/lenovo/k1/prebuilt/md4.ko:system/lib/modules/md4.ko \
+    device/lenovo/k1/prebuilt/tun.ko:system/lib/modules/tun.ko \
     device/lenovo/k1/prebuilt/bcm4329.ko:system/lib/modules/bcm4329.ko \
     device/lenovo/k1/prebuilt/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko
 

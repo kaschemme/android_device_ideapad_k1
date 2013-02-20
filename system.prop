@@ -7,9 +7,9 @@ ro.opengles.version=131072
 # Ethernet
 ro.ethernet.interface=eth0
 ro.ethernet.autoEnable=yes
-# 3G
+# 3G Main settings
 rild.libpath=/system/lib/libhuawei-ril.so
-rild.libargs=-d /dev/ttyUSB2 -v /dev/ttyUSB1
+rild.libargs=-d /dev/ttyACM0 -i wwan0
 ro.pad.features.modem=true
 service.ctool.3g.enable=n
 keyguard.no_require_sim=true
@@ -23,4 +23,4 @@ net.dns2=8.8.4.4
 # Goo Manager Information
 ro.goo.developerid=kaschemme
 ro.goo.rom=CM10_K1_Kaschemme
-ro.goo.version=3
+ro.goo.version=6

@@ -20,12 +20,9 @@ on early-init
     # create directory for mounting usb drives
     mkdir /storage/usbdisk 0666 system system
     symlink /storage/usbdisk /mnt/usbdrive
+
     # FIXME: Remove emmc?
     mkdir /datadata 0771 system system
-    
-    # We will create our own ril-daemon service in class 'core' because the
-    # rild doesn't like being killed. (During device encryption.)
-    stop ril-daemon
 
 #For CPu clocking
     chmod 777	/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -44,16 +41,20 @@ on fs
     setprop ro.crypto.tmpfs_options size=128m,mode=0771,uid=1000,gid=1000
     mount ext4 /dev/block/platform/sdhci-tegra.3/by-num/p7 /data wait noatime nosuid nodev journal_async_commit,data=writeback,nodelalloc,errors=panic
     mount ext4 /dev/block/platform/sdhci-tegra.3/by-num/p4 /cache wait noatime nosuid nodev journal_async_commit,data=writeback,nodelalloc,errors=panic
-    # Add permissions to allow recovery
-    chmod 0666 /dev/block/mmcblk0p5
+#++[2012 03 22 | ASD2 SD2 | Sam_Chiu]Fix the factory reset so slowly in Hynix emmc
+    chmod 660 /dev/block/mmcblk0p5
+    chown root system /dev/block/mmcblk0p5
+#++[2012 03 22 | ASD2 SD2 | Sam_Chiu]Fix the factory reset so slowly in Hynix emmc
+        
+# load cifs modules
+    insmod /system/lib/modules/md4.ko
+    insmod /system/lib/modules/cifs.ko
 
 on post-fs-data
-    # Wi-Fi
     mkdir /data/misc/wifi 0770 wifi wifi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
-    #
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
     mkdir /data/nvcam 0777 system system
-    # DHCP
     mkdir /data/misc/dhcp 0770 dhcp dhcp    
     chown dhcp dhcp /data/misc/dhcp
 
@@ -74,13 +75,10 @@ on post-fs-data
     # Set indication (checked by vold) that we have finished this action
     setprop vold.post_fs_data_done 1
 
-service aries-ril-daemon /system/bin/rild
-    class core
-    socket rild stream 660 root radio
-    socket rild-debug stream 660 radio system
-    user root
-    group radio cache inet misc audio log
-
+#Compal Start + Thomas Wu : Add /data/temp/app
+    mkdir /data/temp 0775 system system
+    mount ext4 /dev/block/mmcblk0p8 /data/temp wait noatime nosuid nodev
+#Compal End
 on boot
 # bluetooth
     # UART device
@@ -101,9 +99,9 @@ on boot
     chown system system /sys/class/backlight/pwm-backlight/brightness
 
 # Sensor
-    chmod 0664 /sys/bus/iio/devices/device0/illuminance0_input
-    chmod 0664 /sys/bus/iio/devices/device0/proximity_raw
-    chmod 0664 /sys/bus/iio/devices/device0/illuminance0_calibbias
+    chmod 664 /sys/bus/iio/devices/device0/illuminance0_input
+    chmod 664 /sys/bus/iio/devices/device0/proximity_raw
+    chmod 664 /sys/bus/iio/devices/device0/illuminance0_calibbias
     write /sys/bus/iio/devices/device0/illuminance0_calibbias 8192
 
 
@@ -262,6 +260,14 @@ service bugreport /system/bin/dumpstate -d -v -o /data/bugreport/bugreport -p
     keycodes 115 114
 #--
 
+# sacdar-20120411 begin
+# add a workaround to recovery 3G module if disconected from HUB
+service wwanloader /system/bin/wwanloader
+    class main
+    disabled
+    oneshot
+# sacdar-20120411 end
+
 #BCM
 service hciattach /system/bin/brcm_patchram_plus --enable_hci --scopcm=0,2,0,0,0,0,0,0,0,0 \
     --baudrate 3000000 --patchramdir /etc/firmware/ --enable_lpm --tosleep=5000 --create_bdaddr /dev/ttyHS2
@@ -276,7 +282,7 @@ service hciattach /system/bin/brcm_patchram_plus --enable_hci --scopcm=0,2,0,0,0
   user gps
   socket gps seqpacket 0660 gps system
   group system inet sdcard_rw
-  class main
+  class late_start
 
 # Mount usb drives as /usbdrive. Generally usb drives are formatted with FAT
 # filesystem, so we support FAT as of now.
