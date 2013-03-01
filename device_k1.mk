@@ -125,6 +125,11 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
     packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml
 
+# Final fix for 3G SOD
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilt/etc/init.d/50em820w:system/etc/init.d/50em820w \
+    $(LOCAL_PATH)/prebuilt/xbin/em820w_tool:system/xbin/em820w_tool
+
 #/system/etc/ppp
 PRODUCT_COPY_FILES += \
     device/lenovo/k1/prebuilt/ppp/ip-down:system/etc/ppp/ip-down \
