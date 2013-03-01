@@ -1,0 +1,21 @@
+#!/system/bin/sh
+
+
+
+#
+# check for modem EM820W from Huawei
+# and active watchdog for 3g crashes
+#
+grep ":1404" /proc/tty/driver/usbserial >/dev/null 2>&1
+if [ $? -eq 0 ]
+then
+  # find service name for rild....
+  SN=$(/system/xbin/egrep "service.*/rild" /* 2>/dev/null | /system/xbin/tail -1 | /system/xbin/sed -e 's/.*service //' -e 's/ .*//' 2>/dev/null)
+
+  if [ -z "$SN" ]
+  then
+    /system/xbin/em820w_tool -vbk
+  else
+    /system/xbin/em820w_tool -vbn ${SN}
+  fi
+fi

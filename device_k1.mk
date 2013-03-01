@@ -15,6 +15,10 @@
 #
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
 
+# modified init.rc
+PRODUCT_COPY_FILES += \
+         device/lenovo/k1/prebuilt/ueventd.rc:root/ueventd.rc \
+
 # inherit proprietary files
 $(call inherit-product-if-exists, vendor/lenovo/k1/k1-vendor.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
