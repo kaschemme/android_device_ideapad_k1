@@ -252,10 +252,9 @@ PRODUCT_COPY_FILES += \
     device/lenovo/k1/prebuilt/bcm4329.ko:system/lib/modules/bcm4329.ko \
     device/lenovo/k1/prebuilt/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko
 
-# Media
+# Boot Animation
 PRODUCT_COPY_FILES += \
-    device/lenovo/k1/prebuilt/bootanimation.zip:system/media/bootanimation.zip
-
+    $(LOCAL_PATH)/prebuilt/bootanimation.zip:system/media/bootanimation.zip
 
 #/system/usr/idc
 PRODUCT_COPY_FILES += \

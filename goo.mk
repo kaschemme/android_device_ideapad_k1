@@ -13,6 +13,6 @@ PRODUCT_COPY_FILES += \
        device/lenovo/k1/prebuilt/wwanloader:system/bin/wwanloader \
        device/lenovo/k1/prebuilt/tegrastats:system/bin/tegrastats
 
-# include custom bootanimation
+# Boot Animation
 PRODUCT_COPY_FILES += \
-        device/lenovo/k1/prebuilt/bootanimation.zip:/data/local/bootanimation.zip
+    $(LOCAL_PATH)/prebuilt/bootanimation.zip:system/media/bootanimation.zip
