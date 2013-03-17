@@ -15,6 +15,7 @@ service.ctool.3g.enable=n
 keyguard.no_require_sim=true
 ro.radio.use-ppp=yes
 ro.radio.noril=no
+net.cdma.ppp.interface=ppp0
 #dns
 net.ppp0.dns1=8.8.8.8
 net.ppp0.dns2=8.8.4.4

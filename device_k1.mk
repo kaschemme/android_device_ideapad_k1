@@ -17,53 +17,55 @@ DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
 
 # modified init.rc
 PRODUCT_COPY_FILES += \
-         device/lenovo/k1/prebuilt/ueventd.rc:root/ueventd.rc \
+         $(LOCAL_PATH)/prebuilt/ueventd.rc:root/ueventd.rc \
 
 # inherit proprietary files
 $(call inherit-product-if-exists, vendor/lenovo/k1/k1-vendor.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
 $(call inherit-product, build/target/product/full_base.mk)
-$(call inherit-product, device/common/gps/gps_eu_supl.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony.mk)
 
 # Prebuilt kernel location
 ifeq ($(TARGET_PREBUILT_KERNEL),)
-	LOCAL_KERNEL := device/lenovo/k1/kernel
+	LOCAL_KERNEL := $(LOCAL_PATH)/kernel
 else
 	LOCAL_KERNEL := $(TARGET_PREBUILT_KERNEL)
 endif
 
 # Files needed for boot image
 PRODUCT_COPY_FILES += \
-    device/lenovo/k1/prebuilt/init.ventana.rc:root/init.ventana.rc \
-    device/lenovo/k1/prebuilt/init.goldfish.rc:root/init.goldfish.rc \
-    device/lenovo/k1/prebuilt/init.nv_dev_board.usb.rc:root/init.nv_dev_board.usb.rc \
-    device/lenovo/k1/prebuilt/init.logging.rc:root/init.logging.rc \
-    device/lenovo/k1/prebuilt/ueventd.ventana.rc:root/ueventd.ventana.rc \
-    device/lenovo/k1/prebuilt/ueventd.goldfish.rc:root/ueventd.goldfish.rc \
+    $(LOCAL_PATH)/prebuilt/init.ventana.rc:root/init.ventana.rc \
+    $(LOCAL_PATH)/prebuilt/init.goldfish.rc:root/init.goldfish.rc \
+    $(LOCAL_PATH)/prebuilt/init.nv_dev_board.usb.rc:root/init.nv_dev_board.usb.rc \
+    $(LOCAL_PATH)/prebuilt/init.logging.rc:root/init.logging.rc \
+    $(LOCAL_PATH)/prebuilt/ueventd.ventana.rc:root/ueventd.ventana.rc \
+    $(LOCAL_PATH)/prebuilt/ueventd.goldfish.rc:root/ueventd.goldfish.rc \
     $(LOCAL_PATH)/prebuilt/gsm::root/sbin/gsm 
 
 #/system/bin
 PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/bin/brcm_patchram_plus:system/bin/brcm_patchram_plus \
     vendor/lenovo/k1/proprietary/bin/glgps_nvidiaTegra2android:system/bin/glgps_nvidiaTegra2android \
-    device/lenovo/k1/prebuilt/k1recovery:system/bin/k1recovery \
     vendor/lenovo/k1/proprietary/bin/rild:system/bin/rild \
-    device/lenovo/k1/prebuilt/nvcpud:system/bin/nvcpud \
     vendor/lenovo/k1/proprietary/bin/tf_daemon:system/bin/tf_daemon \
-    device/lenovo/k1/misc_command:system/bin/misc_command \
+    $(LOCAL_PATH)/prebuilt/nvcpud:system/bin/nvcpud \
+    $(LOCAL_PATH)/prebuilt/k1recovery:system/bin/k1recovery \
+    $(LOCAL_PATH)/misc_command:system/bin/misc_command
 
 
 #/system/etc
 PRODUCT_COPY_FILES += \
-    device/lenovo/k1/prebuilt/vold.fstab:system/etc/vold.fstab \
     vendor/lenovo/k1/proprietary/etc/nvram.txt:system/etc/nvram.txt \
     vendor/lenovo/k1/proprietary/etc/asound.conf:system/etc/asound.conf \
     vendor/lenovo/k1/proprietary/etc/nvcamera.conf:system/etc/nvcamera.conf \
-    vendor/lenovo/k1/proprietary/etc/media_profiles.xml:system/etc/media_profiles.xml \
-    device/lenovo/k1/prebuilt/audio_policy.conf:system/etc/audio_policy.conf
+    $(LOCAL_PATH)/prebuilt/vold.fstab:system/etc/vold.fstab \
+    $(LOCAL_PATH)/prebuilt/audio_effects.conf:system/etc/audio_effeects.conf \
+    $(LOCAL_PATH)/prebuilt/audio_policy.conf:system/etc/audio_policy.conf
 
-PRODUCT_COPY_FILES +=  vendor/lenovo/k1/gps.conf:system/etc/gps.conf
+#/system/etc - GPS configurations
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilt/gps.conf:system/etc/gps.conf \
+    $(LOCAL_PATH)/prebuilt/SuplRootCert:system/etc/SuplRootCert
 
 #/system/etc/bluetooth
 PRODUCT_COPY_FILES += \
@@ -91,12 +93,10 @@ PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/etc/firmware/nvrm_avp.bin:system/etc/firmware/nvrm_avp.bin
     
 #/system/etc/gps
-PRODUCT_COPY_FILES += \
-    vendor/lenovo/k1/proprietary/etc/gps/gpsconfig.xml:system/etc/gps/gpsconfig.xml \
+PRODUCT_COPY_FILES += vendor/lenovo/k1/proprietary/etc/gps/gpsconfig.xml:system/etc/gps/gpsconfig.xml
 
 # apns config file
-PRODUCT_COPY_FILES += \
-    device/lenovo/k1/apns/apns-conf.xml:system/etc/apns-conf.xml \
+PRODUCT_COPY_FILES += $(LOCAL_PATH)/apns/apns-conf.xml:system/etc/apns-conf.xml
 
 
 #/system/etc/permissions
@@ -132,8 +132,8 @@ PRODUCT_COPY_FILES += \
 
 #/system/etc/ppp
 PRODUCT_COPY_FILES += \
-    device/lenovo/k1/prebuilt/ppp/ip-down:system/etc/ppp/ip-down \
-    device/lenovo/k1/prebuilt/ppp/ip-up:system/etc/ppp/ip-up \
+    $(LOCAL_PATH)/prebuilt/ppp/ip-down:system/etc/ppp/ip-down \
+    $(LOCAL_PATH)/prebuilt/ppp/ip-up:system/etc/ppp/ip-up \
     $(LOCAL_PATH)/prebuilt/etc/init.d/02ppp.sh:system/etc/init.d/02ppp.sh \
     $(LOCAL_PATH)/prebuilt/etc/ppp/peers/3g:system/etc/ppp/peers/3g \
     $(LOCAL_PATH)/prebuilt/etc/ppp/peers/gprs:system/etc/ppp/peers/gprs \
@@ -230,14 +230,11 @@ PRODUCT_COPY_FILES += \
 
 #/system/lib/hw
 PRODUCT_COPY_FILES += \
-    vendor/lenovo/k1/proprietary/lib/hw/audio_policy.default.so:system/lib/hw/audio_policy.default.so \
     vendor/lenovo/k1/proprietary/lib/hw/audio_policy.tegra.so:system/lib/hw/audio_policy.tegra.so \
     vendor/lenovo/k1/proprietary/lib/hw/audio.a2dp.default.so:system/lib/hw/audio.a2dp.default.so \
-    vendor/lenovo/k1/proprietary/lib/hw/audio.primary.default.so:system/lib/hw/audio.primary.default.so \
     vendor/lenovo/k1/proprietary/lib/hw/audio.primary.tegra.so:system/lib/hw/audio.primary.tegra.so \
     vendor/lenovo/k1/proprietary/lib/hw/camera.tegra.so:system/lib/hw/camera.tegra.so \
     vendor/lenovo/k1/proprietary/lib/hw/gps.tegra.so:system/lib/hw/gps.tegra.so \
-    vendor/lenovo/k1/proprietary/lib/hw/gralloc.default.so:system/lib/hw/gralloc.default.so \
     vendor/lenovo/k1/proprietary/lib/hw/gralloc.tegra.so:system/lib/hw/gralloc.tegra.so \
     vendor/lenovo/k1/proprietary/lib/hw/hwcomposer.tegra.so:system/lib/hw/hwcomposer.tegra.so \
     vendor/lenovo/k1/proprietary/lib/hw/lights.ventana.so:system/lib/hw/lights.ventana.so \
@@ -246,15 +243,14 @@ PRODUCT_COPY_FILES += \
 
 #/system/lib/modules
 PRODUCT_COPY_FILES += \
-    device/lenovo/k1/prebuilt/cifs.ko:system/lib/modules/cifs.ko \
-    device/lenovo/k1/prebuilt/md4.ko:system/lib/modules/md4.ko \
-    device/lenovo/k1/prebuilt/tun.ko:system/lib/modules/tun.ko \
-    device/lenovo/k1/prebuilt/bcm4329.ko:system/lib/modules/bcm4329.ko \
-    device/lenovo/k1/prebuilt/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko
+    $(LOCAL_PATH)/prebuilt/cifs.ko:system/lib/modules/cifs.ko \
+    $(LOCAL_PATH)/prebuilt/md4.ko:system/lib/modules/md4.ko \
+    $(LOCAL_PATH)/prebuilt/tun.ko:system/lib/modules/tun.ko \
+    $(LOCAL_PATH)/prebuilt/bcm4329.ko:system/lib/modules/bcm4329.ko \
+    $(LOCAL_PATH)/prebuilt/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko
 
 # Boot Animation
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/prebuilt/bootanimation.zip:system/media/bootanimation.zip
+PRODUCT_COPY_FILES += $(LOCAL_PATH)/prebuilt/bootanimation.zip:system/media/bootanimation.zip
 
 #/system/usr/idc
 PRODUCT_COPY_FILES += \
@@ -331,7 +327,6 @@ PRODUCT_PACKAGES := \
     librs_jni \
     make_ext4fs \
     setup_fs \
-    audio.primary.ventana \
     audio.a2dp.default \
     com.android.future.usb.accessory \
     whisperd \
@@ -364,10 +359,9 @@ ADDITIONAL_DEFAULT_PROPERTIES += \
 PRODUCT_PROPERTY_OVERRIDES := \
     wifi.interface=wlan0 \
     mobiledata.interfaces=ppp0,wlan0 \
-    net.cdma.ppp.interace=ppp0 \
     wifi.supplicant_scan_interval=15 \
 
-# DEVICE_PACKAGE_OVERLAYS := \ device/lenovo/k1/overlay
+# DEVICE_PACKAGE_OVERLAYS := \ $(LOCAL_PATH)/overlay
 
 PRODUCT_CHARACTERISTICS := tablet
 
@@ -380,7 +374,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/media_profiles.xml:system/etc/media_profiles.xml \
 
 # goo.im stuff
-$(call inherit-product, device/lenovo/k1/goo.mk)
+$(call inherit-product, $(LOCAL_PATH)/goo.mk)
 
 WIFI_BAND := 802_11_ABG
 $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4329/device-bcm.mk)
