@@ -53,7 +53,7 @@ BOARD_CACHE_DEVICE := /dev/block/mmcblk0p4
 BOARD_CACHE_FILESYSTEM := ext4
 
 #TARGET_KERNEL_CONFIG := cm10_k1_defconfig
-TARGET_PREBUILT_KERNEL := $(LOCAL_PATH)/kernel
+TARGET_PREBUILT_KERNEL := device/lenovo/k1/kernel
 TARGET_RECOVERY_PRE_COMMAND := "/system/bin/misc_command FOTA"
 
 # Recovery Keymapping 

@@ -24,4 +24,4 @@ net.dns2=8.8.4.4
 # Goo Manager Information
 ro.goo.developerid=kaschemme
 ro.goo.rom=CM10_K1_Kaschemme
-ro.goo.version=6
+ro.goo.version=7
