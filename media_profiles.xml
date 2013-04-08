@@ -646,7 +646,7 @@
   </CamcorderProfiles>
 
   <!-- Front Camera -->
-  <CamcorderProfiles cameraId="1">
+  <CamcorderProfiles cameraId="3">
 
     <EncoderProfile quality="low" fileFormat="3gp" duration="30">
       <Video codec="h264"
@@ -745,9 +745,9 @@
 
     <EncoderProfile quality="timelapsehigh" fileFormat="3gp" duration="30">
       <Video codec="h264"
-             bitRate="8000000"
-             width="1280"
-             height="720"
+             bitRate="14000000"
+             width="1920"
+             height="1080"
              frameRate="30" />
 
       <!--
@@ -861,8 +861,8 @@
     -->
   <VideoEncoderCap name="h264" enabled="true"
       minBitRate="64000" maxBitRate="14000000"
-      minFrameWidth="176" maxFrameWidth="1280"
-      minFrameHeight="144" maxFrameHeight="720"
+      minFrameWidth="176" maxFrameWidth="1920"
+      minFrameHeight="144" maxFrameHeight="1088"
       minFrameRate="1" maxFrameRate="30" />
 
   <VideoEncoderCap name="h263" enabled="true"
