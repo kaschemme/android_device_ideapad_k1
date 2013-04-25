@@ -125,8 +125,6 @@
          This must be overridden in platform specific overlays -->
     <array name="config_autoBrightnessKeyboardBacklightValues" />
 
-    <!-- XXXXX NOTE THE FOLLOWING RESOURCES USE THE WRONG NAMING CONVENTION.
-         Please don't copy them, copy anything else. -->
 
     <!-- This string array should be overridden by the device to present a list of network
          attributes.  This is used by the connectivity manager to decide which networks can coexist

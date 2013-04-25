@@ -49,6 +49,7 @@ on fs
 # load cifs modules
     insmod /system/lib/modules/md4.ko
     insmod /system/lib/modules/cifs.ko
+    insmod /system/lib/modules/usb-storage.ko
 
 on post-fs-data
     mkdir /data/misc/wifi 0777 wifi wifi

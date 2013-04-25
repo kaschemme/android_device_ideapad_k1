@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# Boot Animation
+PRODUCT_COPY_FILES += $(LOCAL_PATH)/prebuilt/bootanimation.zip:system/media/bootanimation.zip
+
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
 
 # modified init.rc
@@ -97,7 +101,6 @@ PRODUCT_COPY_FILES += vendor/lenovo/k1/proprietary/etc/gps/gpsconfig.xml:system/
 
 # apns config file
 PRODUCT_COPY_FILES += $(LOCAL_PATH)/apns/apns-conf.xml:system/etc/apns-conf.xml
-
 
 #/system/etc/permissions
 PRODUCT_COPY_FILES += \
@@ -247,10 +250,8 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilt/md4.ko:system/lib/modules/md4.ko \
     $(LOCAL_PATH)/prebuilt/tun.ko:system/lib/modules/tun.ko \
     $(LOCAL_PATH)/prebuilt/bcm4329.ko:system/lib/modules/bcm4329.ko \
-    $(LOCAL_PATH)/prebuilt/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko
-
-# Boot Animation
-PRODUCT_COPY_FILES += $(LOCAL_PATH)/prebuilt/bootanimation.zip:system/media/bootanimation.zip
+    $(LOCAL_PATH)/prebuilt/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko \
+    $(LOCAL_PATH)/prebuilt/usb-storage.ko:system/lib/modules/usb-storage.ko
 
 #/system/usr/idc
 PRODUCT_COPY_FILES += \
@@ -319,6 +320,7 @@ PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/vendor/firmware/bcm4330/fw_bcmdhd_p2p.bin:system/vendor/firmware/bcm4330/fw_bcmdhd_p2p.bin \
     vendor/lenovo/k1/proprietary/vendor/firmware/bcm4330/fw_bcmdhd.bin:system/vendor/firmware/bcm4330/fw_bcmdhd.bin
 
+# Extra packages to build for this device
 PRODUCT_PACKAGES := \
     camera.tegra \
     gps.tegra \
@@ -349,7 +351,7 @@ PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
 ADDITIONAL_DEFAULT_PROPERTIES += \
     ro.secure=0 \
     ro.sf.lcd_density=160 \
-    persist.sys.usb.config=mtp \
+    persist.sys.usb.config=mtp,adb \
     dalvik.vm.heapstartsize=5m \
     dalvik.vm.heapgrowthlimit=48m \
     dalvik.vm.heapsize=256m \
@@ -363,9 +365,10 @@ PRODUCT_PROPERTY_OVERRIDES := \
 
 # DEVICE_PACKAGE_OVERLAYS := \ $(LOCAL_PATH)/overlay
 
+# Build characteristics setting 
 PRODUCT_CHARACTERISTICS := tablet
 
-# we have enough storage space to hold precise GC data
+# This device has enough space for precise dalvik
 PRODUCT_TAGS += dalvik.gc.type-precise
 
 # media config xml file
