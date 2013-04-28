@@ -256,7 +256,6 @@ service wwanloader /system/bin/wwanloader
 service wpa_supplicant /system/bin/wpa_supplicant \
     -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
 # Compal-Indigo-Jason Dong-20120308 end
-
 #   we will start as root and wpa_supplicant will switch to user wifi
 #   after setting up the capabilities required for WEXT
 #   user wifi
