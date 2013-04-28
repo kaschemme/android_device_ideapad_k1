@@ -153,11 +153,18 @@ on boot
     write /sys/block/mmcblk0/queue/read_ahead_kb 2048
     write /sys/block/mmcblk1/queue/read_ahead_kb 2048
 
+# GPS
+    mkdir /data/gps
+    chown gps system /data/gps
+    chmod 770 /data/gps
+    chown gps system /dev/ttyHS1
+    chmod 0664 /dev/ttyHS1
+
 # GPS init
     write /sys/class/gpio/export 203
     write /sys/class/gpio/gpio203/value 0
     write /sys/class/gpio/gpio203/direction out
-    chown root system /sys/class/gpio/gpio203/value
+    chown gps system /sys/class/gpio/gpio203/value
     chmod 0664 /sys/class/gpio/gpio203/value
 
 #++Charlie
@@ -329,8 +336,8 @@ service hciattach /system/bin/brcm_patchram_plus --enable_hci --scopcm=0,2,0,0,0
   service gps-daemon /system/bin/glgps_nvidiaTegra2android -c /system/etc/gps/gpsconfig.xml
   user gps
   socket gps seqpacket 0666 gps system
-  group system inet sdcard_rw
-  class main
+  group system
+  class late_start
 
 # Mount usb drives as /usbdrive. Generally usb drives are formatted with FAT
 # filesystem, so we support FAT as of now.
