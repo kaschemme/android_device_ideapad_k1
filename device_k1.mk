@@ -373,8 +373,9 @@ PRODUCT_TAGS += dalvik.gc.type-precise
 
 # media config xml file
 PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/mixer_paths.xml:system/etc/mixer_paths.xml \
     $(LOCAL_PATH)/media_codecs.xml:system/etc/media_codecs.xml \
-    $(LOCAL_PATH)/media_profiles.xml:system/etc/media_profiles.xml \
+    $(LOCAL_PATH)/media_profiles.xml:system/etc/media_profiles.xml    
 
 # goo.im stuff
 $(call inherit-product, $(LOCAL_PATH)/goo.mk)
