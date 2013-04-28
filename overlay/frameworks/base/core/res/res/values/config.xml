@@ -143,7 +143,6 @@
         <item>"mobile_supl,3,0,2,60000,true"</item>
         <item>"mobile_dun,4,0,5,60000,true"</item>
         <item>"mobile_hipri,5,0,3,60000,true"</item>
-        <item>"wifi_p2p,13,1,0,-1,false"</item>
         <item>"bt_dun,14,14,2,-1,true"</item>
         <item>"ethernet,9,9,9,-1,true"</item>
     </string-array>
