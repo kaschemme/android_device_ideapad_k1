@@ -319,11 +319,11 @@ service sdcard /system/bin/sdcard /data/media 1023 1023
 # bugreport is triggered by the VOLUME-DOWN and VOLUME-UP keys
 #++Charles
 # service bugreport /system/bin/dumpstate -d -v -o /data/storage/bugreports/bugreport
-service bugreport /system/bin/dumpstate -d -v -o /data/bugreport/bugreport -p
-    class main
-    disabled
-    oneshot
-    keycodes 115 114
+#service bugreport /system/bin/dumpstate -d -v -o /data/bugreport/bugreport -p
+#    class main
+#    disabled
+#    oneshot
+#    keycodes 115 114
 #--
 
 #BCM
