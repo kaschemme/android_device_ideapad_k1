@@ -294,18 +294,27 @@
              channels="1" />
     </EncoderProfile>
 
+<!-- Compal K1-Carl begin -->
     <EncoderProfile quality="high" fileFormat="3gp" duration="30">
+    <!--
       <Video codec="h264"
              bitRate="4000000"
              width="640"
              height="480"
              frameRate="30" />
+    -->
+      <Video codec="h264"
+	     bitRate="8000000"
+	     width="1280"
+	     height="720"
+	     frameRate="30" />
 
       <Audio codec="aac"
              bitRate="96000"
              sampleRate="16000"
              channels="1" />
     </EncoderProfile>
+<!-- Compal K1-Carl end -->
 
     <EncoderProfile quality="qcif" fileFormat="3gp" duration="30">
       <Video codec="h264"
@@ -345,6 +354,21 @@
              sampleRate="16000"
              channels="1" />
     </EncoderProfile>
+
+<!-- Compal K1-Carl : add 720p (begin) -->
+    <EncoderProfile quality="720p" fileFormat="3gp" duration="30">
+	<Video codec="h264"
+	    bitRate="8000000"
+	    width="1280"
+	    height="720"
+	    frameRate="30" />
+
+	<Audio codec="aac"
+	    bitRate="96000"
+	    sampleRate="16000"
+	    channels="1" />
+    </EncoderProfile>
+<!-- Compal K1-Carl (end) -->
 
     <EncoderProfile quality="timelapselow" fileFormat="3gp" duration="30">
       <Video codec="h264"

@@ -15,7 +15,7 @@
 #
 
 # Boot Animation
-PRODUCT_COPY_FILES += $(LOCAL_PATH)/prebuilt/bootanimation.zip:system/media/bootanimation.zip
+PRODUCT_COPY_FILES += $(LOCAL_PATH)/prebuilt/media/bootanimation.zip:system/media/bootanimation.zip
 
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
 
@@ -44,7 +44,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilt/init.logging.rc:root/init.logging.rc \
     $(LOCAL_PATH)/prebuilt/ueventd.ventana.rc:root/ueventd.ventana.rc \
     $(LOCAL_PATH)/prebuilt/ueventd.goldfish.rc:root/ueventd.goldfish.rc \
-    $(LOCAL_PATH)/prebuilt/gsm::root/sbin/gsm 
+    $(LOCAL_PATH)/prebuilt/sbin/gsm::root/sbin/gsm 
 
 #/system/bin
 PRODUCT_COPY_FILES += \
@@ -52,9 +52,9 @@ PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/bin/glgps_nvidiaTegra2android:system/bin/glgps_nvidiaTegra2android \
     vendor/lenovo/k1/proprietary/bin/rild:system/bin/rild \
     vendor/lenovo/k1/proprietary/bin/tf_daemon:system/bin/tf_daemon \
-    $(LOCAL_PATH)/prebuilt/nvcpud:system/bin/nvcpud \
-    $(LOCAL_PATH)/prebuilt/k1recovery:system/bin/k1recovery \
-    $(LOCAL_PATH)/misc_command:system/bin/misc_command
+    $(LOCAL_PATH)/prebuilt/bin/nvcpud:system/bin/nvcpud \
+    $(LOCAL_PATH)/prebuilt/bin/k1recovery:system/bin/k1recovery \
+    $(LOCAL_PATH)/prebuilt/bin/misc_command:system/bin/misc_command
 
 
 #/system/etc
@@ -62,14 +62,14 @@ PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/etc/nvram.txt:system/etc/nvram.txt \
     vendor/lenovo/k1/proprietary/etc/asound.conf:system/etc/asound.conf \
     vendor/lenovo/k1/proprietary/etc/nvcamera.conf:system/etc/nvcamera.conf \
-    $(LOCAL_PATH)/prebuilt/vold.fstab:system/etc/vold.fstab \
-    $(LOCAL_PATH)/prebuilt/audio_effects.conf:system/etc/audio_effeects.conf \
-    $(LOCAL_PATH)/prebuilt/audio_policy.conf:system/etc/audio_policy.conf
+    $(LOCAL_PATH)/prebuilt/etc/vold.fstab:system/etc/vold.fstab \
+    $(LOCAL_PATH)/prebuilt/etc/audio_effects.conf:system/etc/audio_effects.conf \
+    $(LOCAL_PATH)/prebuilt/etc/audio_policy.conf:system/etc/audio_policy.conf
 
 #/system/etc - GPS configurations
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/prebuilt/gps.conf:system/etc/gps.conf \
-    $(LOCAL_PATH)/prebuilt/SuplRootCert:system/etc/SuplRootCert
+    $(LOCAL_PATH)/prebuilt/etc/gps.conf:system/etc/gps.conf \
+    $(LOCAL_PATH)/prebuilt/etc/SuplRootCert:system/etc/SuplRootCert
 
 #/system/etc/bluetooth
 PRODUCT_COPY_FILES += \
@@ -108,14 +108,15 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.camera.xml:system/etc/permissions/android.hardware.camera.xml \
     frameworks/native/data/etc/android.hardware.camera.front.xml:system/etc/permissions/android.hardware.camera.front.xml \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:system/etc/permissions/android.hardware.camera.flash-autofocus.xml \
-    frameworks/native/data/etc/android.hardware.camera.xml:system/etc/permissions/android.hardware.camera.xml \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
-    frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
-    frameworks/native/data/etc/android.hardware.sensor.compass.xml:system/etc/permissions/android.hardware.sensor.compass.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:system/etc/permissions/android.hardware.sensor.light.xml \
-    frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:system/etc/permissions/android.hardware.sensor.gyroscope.xml \
-    frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
+	frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
+	frameworks/native/data/etc/android.hardware.sensor.compass.xml:system/etc/permissions/android.hardware.sensor.compass.xml \
+	frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:system/etc/permissions/android.hardware.sensor.gyroscope.xml \
+	frameworks/native/data/etc/android.hardware.sensor.barometer.xml:system/etc/permissions/android.hardware.sensor.barometer.xml \
+	frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
+	frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
     frameworks/native/data/etc/android.software.sip.xml:system/etc/permissions/android.software.sip.xml \
     frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
@@ -123,8 +124,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:system/etc/permissions/android.hardware.bluetooth.xml \
     frameworks/native/data/etc/android.hardware.location.xml:system/etc/permissions/android.hardware.location.xml \
     frameworks/native/data/etc/android.hardware.touchscreen.xml:system/etc/permissions/android.hardware.touchscreen.xml \
-    frameworks/native/data/etc/android.hardware.sensor.barometer.xml:system/etc/permissions/android.hardware.sensor.barometer.xml \
-    frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
     packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml
 
@@ -135,9 +134,10 @@ PRODUCT_COPY_FILES += \
 
 #/system/etc/ppp
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/prebuilt/ppp/ip-down:system/etc/ppp/ip-down \
-    $(LOCAL_PATH)/prebuilt/ppp/ip-up:system/etc/ppp/ip-up \
     $(LOCAL_PATH)/prebuilt/etc/init.d/02ppp.sh:system/etc/init.d/02ppp.sh \
+	$(LOCAL_PATH)/prebuilt/etc/ppp/ip-down:system/etc/ppp/ip-down \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/ip-up:system/etc/ppp/ip-up \
+	$(LOCAL_PATH)/prebuilt/etc/ppp/ip-up-vpn:system/etc/ppp/ip-up-vpn \
     $(LOCAL_PATH)/prebuilt/etc/ppp/peers/3g:system/etc/ppp/peers/3g \
     $(LOCAL_PATH)/prebuilt/etc/ppp/peers/gprs:system/etc/ppp/peers/gprs \
     $(LOCAL_PATH)/prebuilt/etc/ppp/peers/pppd-ril.options:system/etc/ppp/peers/pppd-ril.options \
@@ -218,8 +218,10 @@ PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/lib/libsmapi.so:system/lib/libsmapi.so \
     vendor/lenovo/k1/proprietary/lib/libstagefrighthw.so:system/lib/libstagefrighthw.so \
     vendor/lenovo/k1/proprietary/lib/libtf_crypto_sst.so:system/lib/libtf_crypto_sst.so \
-    vendor/lenovo/k1/proprietary/lib/omxplayer.so:system/lib/omxplayer.so \
-    device/lenovo/libwvm.so:system/lib/libwvm.so
+    vendor/lenovo/k1/proprietary/lib/omxplayer.so:system/lib/omxplayer.so
+
+# libwvm.so
+PRODUCT_COPY_FILES +=  $(LOCAL_PATH)/prebuilt/lib/libwvm.so:system/lib/libwvm.so
 
 #/system/lib/egl
 PRODUCT_COPY_FILES += \
@@ -246,12 +248,12 @@ PRODUCT_COPY_FILES += \
 
 #/system/lib/modules
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/prebuilt/cifs.ko:system/lib/modules/cifs.ko \
-    $(LOCAL_PATH)/prebuilt/md4.ko:system/lib/modules/md4.ko \
-    $(LOCAL_PATH)/prebuilt/tun.ko:system/lib/modules/tun.ko \
-    $(LOCAL_PATH)/prebuilt/bcm4329.ko:system/lib/modules/bcm4329.ko \
-    $(LOCAL_PATH)/prebuilt/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko \
-    $(LOCAL_PATH)/prebuilt/usb-storage.ko:system/lib/modules/usb-storage.ko
+    $(LOCAL_PATH)/prebuilt/modules/cifs.ko:system/lib/modules/cifs.ko \
+    $(LOCAL_PATH)/prebuilt/modules/md4.ko:system/lib/modules/md4.ko \
+    $(LOCAL_PATH)/prebuilt/modules/tun.ko:system/lib/modules/tun.ko \
+    $(LOCAL_PATH)/prebuilt/modules/bcm4329.ko:system/lib/modules/bcm4329.ko \
+    $(LOCAL_PATH)/prebuilt/modules/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko \
+    $(LOCAL_PATH)/prebuilt/modules/usb-storage.ko:system/lib/modules/usb-storage.ko
 
 #/system/usr/idc
 PRODUCT_COPY_FILES += \
@@ -373,9 +375,9 @@ PRODUCT_TAGS += dalvik.gc.type-precise
 
 # media config xml file
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/mixer_paths.xml:system/etc/mixer_paths.xml \
-    $(LOCAL_PATH)/media_codecs.xml:system/etc/media_codecs.xml \
-    $(LOCAL_PATH)/media_profiles.xml:system/etc/media_profiles.xml    
+    $(LOCAL_PATH)/prebuilt/etc/mixer_paths.xml:system/etc/mixer_paths.xml \
+    $(LOCAL_PATH)/prebuilt/etc/media_codecs.xml:system/etc/media_codecs.xml \
+    $(LOCAL_PATH)/prebuilt/etc/media_profiles.xml:system/etc/media_profiles.xml    
 
 # goo.im stuff
 $(call inherit-product, $(LOCAL_PATH)/goo.mk)

@@ -10,9 +10,9 @@ PRODUCT_COPY_FILES += \
 
 # include specific lenovo apps
 PRODUCT_COPY_FILES += \
-       device/lenovo/k1/prebuilt/wwanloader:system/bin/wwanloader \
-       device/lenovo/k1/prebuilt/tegrastats:system/bin/tegrastats
+       device/lenovo/k1/prebuilt/bin/wwanloader:system/bin/wwanloader \
+       device/lenovo/k1/prebuilt/bin/tegrastats:system/bin/tegrastats
 
 # Boot Animation
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/prebuilt/bootanimation.zip:system/media/bootanimation.zip
+    $(LOCAL_PATH)/prebuilt/media/bootanimation.zip:system/media/bootanimation.zip
