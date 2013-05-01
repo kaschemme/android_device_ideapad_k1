@@ -48,10 +48,7 @@ PRODUCT_COPY_FILES += \
 
 #/system/bin
 PRODUCT_COPY_FILES += \
-    vendor/lenovo/k1/proprietary/bin/brcm_patchram_plus:system/bin/brcm_patchram_plus \
-    vendor/lenovo/k1/proprietary/bin/glgps_nvidiaTegra2android:system/bin/glgps_nvidiaTegra2android \
     vendor/lenovo/k1/proprietary/bin/rild:system/bin/rild \
-    vendor/lenovo/k1/proprietary/bin/tf_daemon:system/bin/tf_daemon \
     $(LOCAL_PATH)/prebuilt/bin/nvcpud:system/bin/nvcpud \
     $(LOCAL_PATH)/prebuilt/bin/k1recovery:system/bin/k1recovery \
     $(LOCAL_PATH)/prebuilt/bin/misc_command:system/bin/misc_command
@@ -59,9 +56,6 @@ PRODUCT_COPY_FILES += \
 
 #/system/etc
 PRODUCT_COPY_FILES += \
-    vendor/lenovo/k1/proprietary/etc/nvram.txt:system/etc/nvram.txt \
-    vendor/lenovo/k1/proprietary/etc/asound.conf:system/etc/asound.conf \
-    vendor/lenovo/k1/proprietary/etc/nvcamera.conf:system/etc/nvcamera.conf \
     $(LOCAL_PATH)/prebuilt/etc/vold.fstab:system/etc/vold.fstab \
     $(LOCAL_PATH)/prebuilt/etc/audio_effects.conf:system/etc/audio_effects.conf \
     $(LOCAL_PATH)/prebuilt/etc/audio_policy.conf:system/etc/audio_policy.conf
@@ -70,11 +64,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilt/etc/gps.conf:system/etc/gps.conf \
     $(LOCAL_PATH)/prebuilt/etc/SuplRootCert:system/etc/SuplRootCert
-
-#/system/etc/bluetooth
-PRODUCT_COPY_FILES += \
-    vendor/lenovo/k1/proprietary/etc/bluetooth/bdaddr:system/etc/bluetooth/bdaddr \
-    vendor/lenovo/k1/proprietary/etc/bluetooth/main.conf:system/etc/bluetooth/main.conf
 
 #/system/etc/firmware
 PRODUCT_COPY_FILES += \
@@ -111,12 +100,12 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:system/etc/permissions/android.hardware.sensor.light.xml \
-	frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
-	frameworks/native/data/etc/android.hardware.sensor.compass.xml:system/etc/permissions/android.hardware.sensor.compass.xml \
-	frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:system/etc/permissions/android.hardware.sensor.gyroscope.xml \
-	frameworks/native/data/etc/android.hardware.sensor.barometer.xml:system/etc/permissions/android.hardware.sensor.barometer.xml \
-	frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
-	frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
+    frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
+    frameworks/native/data/etc/android.hardware.sensor.compass.xml:system/etc/permissions/android.hardware.sensor.compass.xml \
+    frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:system/etc/permissions/android.hardware.sensor.gyroscope.xml \
+    frameworks/native/data/etc/android.hardware.sensor.barometer.xml:system/etc/permissions/android.hardware.sensor.barometer.xml \
+    frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
+    frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
     frameworks/native/data/etc/android.software.sip.xml:system/etc/permissions/android.software.sip.xml \
     frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
@@ -135,9 +124,9 @@ PRODUCT_COPY_FILES += \
 #/system/etc/ppp
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilt/etc/init.d/02ppp.sh:system/etc/init.d/02ppp.sh \
-	$(LOCAL_PATH)/prebuilt/etc/ppp/ip-down:system/etc/ppp/ip-down \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/ip-down:system/etc/ppp/ip-down \
     $(LOCAL_PATH)/prebuilt/etc/ppp/ip-up:system/etc/ppp/ip-up \
-	$(LOCAL_PATH)/prebuilt/etc/ppp/ip-up-vpn:system/etc/ppp/ip-up-vpn \
+    $(LOCAL_PATH)/prebuilt/etc/ppp/ip-up-vpn:system/etc/ppp/ip-up-vpn \
     $(LOCAL_PATH)/prebuilt/etc/ppp/peers/3g:system/etc/ppp/peers/3g \
     $(LOCAL_PATH)/prebuilt/etc/ppp/peers/gprs:system/etc/ppp/peers/gprs \
     $(LOCAL_PATH)/prebuilt/etc/ppp/peers/pppd-ril.options:system/etc/ppp/peers/pppd-ril.options \

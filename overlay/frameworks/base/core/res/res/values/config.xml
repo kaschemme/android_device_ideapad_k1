@@ -82,15 +82,19 @@
          than the size of the config_autoBrightnessLevels array.
          This must be overridden in platform specific overlays -->
     <integer-array name="config_autoBrightnessLcdBacklightValues">
-        <item>30</item>
-        <item>80</item>
-        <item>105</item>
-        <item>135</item>
-        <item>160</item>
-        <item>188</item>
-        <item>214</item>
-        <item>232</item>
-        <item>249</item>
+        <item>10</item>
+        <item>17</item>
+        <item>24</item>
+        <item>47</item>
+        <item>70</item>
+        <item>93</item>
+        <item>116</item>
+        <item>139</item>
+        <item>162</item>
+        <item>185</item>
+        <item>218</item>
+        <item>231</item>
+        <item>255</item>
         <item>255</item>
     </integer-array>
 
@@ -99,8 +103,8 @@
          than the size of the config_autoBrightnessLevels array.
          This must be overridden in platform specific overlays -->
     <integer-array name="config_autoBrightnessButtonBacklightValues">
-        <item>6</item>
-        <item>12</item>
+        <item>10</item>
+        <item>17</item>
         <item>24</item>
         <item>47</item>
         <item>70</item>
@@ -116,7 +120,7 @@
     </integer-array>
 
     <!-- Minimum screen brightness allowed by the power manager. -->
-    <integer name="config_screenBrightnessDim">30</integer>
+    <integer name="config_screenBrightnessDim">10</integer>
     
     <!-- Array of output values for keyboard backlight corresponding to the LUX values
          in the config_autoBrightnessLevels array.  This array should have size one greater
@@ -134,7 +138,7 @@
          does not require auto-restore. -->
     <!-- the 6th element indicates boot-time dependency-met value. -->
     <string-array translatable="false" name="networkAttributes">
-        <item>"wifi,1,1,1,-1,true"</item>
+        <item>"wifi,1,1,2,-1,true"</item>
         <item>"bluetooth,7,7,0,-1,true"</item>
         <item>"mobile,0,0,1,-1,true"</item>
         <item>"mobile_mms,2,0,2,60000,true"</item>
@@ -177,7 +181,6 @@
          Wifi interfaces.  If the device doesn't want to support tethering over Wifi this
          should be empty.  An example would be "softap.*" -->
     <string-array translatable="false" name="config_tether_wifi_regexs">
-        <item>"wlan0"</item>
     </string-array>
 
     <!-- List of regexpressions describing the interface (if any) that represent tetherable

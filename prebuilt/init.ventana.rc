@@ -330,7 +330,7 @@ service hciattach /system/bin/brcm_patchram_plus --enable_hci --scopcm=0,2,0,0,0
   user gps
   socket gps seqpacket 0666 gps system
   group system inet sdcard_rw
-  class main
+  class late_start
 
 # Mount usb drives as /usbdrive. Generally usb drives are formatted with FAT
 # filesystem, so we support FAT as of now.

@@ -18,6 +18,7 @@
 /dev/video0	0660	media	camera
 /dev/video1	0660	media	camera
 /dev/tegra_dc*	0660	system	system
+/dev/ttyACM*    0660    radio   system
 /dev/mpu        0640    system  system
 /dev/mpuirq     0640    system  system
 /dev/accelirq	0640	system	system

@@ -25,3 +25,4 @@ net.dns2=8.8.4.4
 ro.goo.developerid=kaschemme
 ro.goo.rom=CM10_K1_Kaschemme
 ro.goo.version=8
+ro.allow.mock.location=0
