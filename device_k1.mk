@@ -348,11 +348,14 @@ ADDITIONAL_DEFAULT_PROPERTIES += \
     dalvik.vm.heapsize=256m \
     net.bt.name=Android
 
-
 PRODUCT_PROPERTY_OVERRIDES := \
     wifi.interface=wlan0 \
     mobiledata.interfaces=ppp0,wlan0 \
     wifi.supplicant_scan_interval=15 \
+
+# If CM_BUILDTYPE is not defined, set to UNOFFICIAL
+# Alternate options: EXPERIMENTAL, NIGHTLY or RELEASE
+CM_BUILDTYPE := NIGHTLY
 
 # DEVICE_PACKAGE_OVERLAYS := \ $(LOCAL_PATH)/overlay
 
