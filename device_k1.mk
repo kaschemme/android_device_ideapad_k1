@@ -14,9 +14,6 @@
 # limitations under the License.
 #
 
-# Boot Animation
-PRODUCT_COPY_FILES += $(LOCAL_PATH)/prebuilt/media/bootanimation.zip:system/media/bootanimation.zip
-
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
 
 # modified init.rc
