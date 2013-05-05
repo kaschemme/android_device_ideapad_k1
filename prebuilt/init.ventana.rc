@@ -158,7 +158,7 @@ on boot
     write /sys/class/gpio/gpio203/value 0
     write /sys/class/gpio/gpio203/direction out
     chown root system /sys/class/gpio/gpio203/value
-    chmod 0664 /sys/class/gpio/gpio203/value
+    chmod 0666 /sys/class/gpio/gpio203/value
 
 #++Charlie
 # For NvPowerMgs access permission
@@ -330,7 +330,7 @@ service hciattach /system/bin/brcm_patchram_plus --enable_hci --scopcm=0,2,0,0,0
   user gps
   socket gps seqpacket 0666 gps system
   group system inet sdcard_rw
-  class late_start
+  class main
 
 # Mount usb drives as /usbdrive. Generally usb drives are formatted with FAT
 # filesystem, so we support FAT as of now.
