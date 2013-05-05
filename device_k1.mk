@@ -342,7 +342,7 @@ PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
 ADDITIONAL_DEFAULT_PROPERTIES += \
     ro.secure=0 \
     ro.sf.lcd_density=160 \
-    persist.sys.usb.config=mtp,adb \
+    persist.sys.usb.config=mtp \
     dalvik.vm.heapstartsize=5m \
     dalvik.vm.heapgrowthlimit=48m \
     dalvik.vm.heapsize=256m \
