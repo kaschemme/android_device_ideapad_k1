@@ -340,6 +340,7 @@ ADDITIONAL_DEFAULT_PROPERTIES += \
     ro.secure=0 \
     ro.sf.lcd_density=160 \
     persist.sys.usb.config=mtp \
+    dalvik.vm.dexopt-data-only=1 \
     dalvik.vm.heapstartsize=5m \
     dalvik.vm.heapgrowthlimit=48m \
     dalvik.vm.heapsize=256m \
