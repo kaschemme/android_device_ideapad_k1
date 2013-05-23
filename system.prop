@@ -26,8 +26,6 @@ ro.goo.developerid=kaschemme
 ro.goo.rom=CM10_K1_Kaschemme
 ro.goo.version=8
 ro.allow.mock.location=0
-# disable ipv6
-persist.telephony.support.ipv6=0
 # Faster streaming videos
 media.stagefright.enable-player=true
 media.stagefright.enable-meta=true
