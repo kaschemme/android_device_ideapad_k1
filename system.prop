@@ -26,10 +26,3 @@ ro.goo.developerid=kaschemme
 ro.goo.rom=CM10_K1_Kaschemme
 ro.goo.version=8
 ro.allow.mock.location=0
-# Faster streaming videos
-media.stagefright.enable-player=true
-media.stagefright.enable-meta=true
-media.stagefright.enable-scan=true
-media.stagefright.enable-http=true
-media.stagefright.enable-rtsp=true
-media.stagefright.enable-record=false
