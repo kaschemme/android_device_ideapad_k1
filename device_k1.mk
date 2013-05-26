@@ -297,17 +297,6 @@ PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/usr/share/alsa/pcm/surround51.conf:system/usr/share/alsa/pcm/surround51.conf \
     vendor/lenovo/k1/proprietary/usr/share/alsa/pcm/surround71.conf:system/usr/share/alsa/pcm/surround71.conf
 
-#/system/vendor/firmware
-PRODUCT_COPY_FILES += \
-    vendor/lenovo/k1/proprietary/vendor/firmware/fw_bcm4329.bin:system/vendor/firmware/fw_bcm4329.bin \
-    vendor/lenovo/k1/proprietary/vendor/firmware/fw_bcm4329_apsta.bin:system/vendor/firmware/fw_bcm4329_apsta.bin \
-    vendor/lenovo/k1/proprietary/vendor/firmware/bcm4329/fw_bcmdhd_apsta.bin:system/vendor/firmware/bcm4329/fw_bcmdhd_apsta.bin \
-    vendor/lenovo/k1/proprietary/vendor/firmware/bcm4329/fw_bcmdhd_p2p.bin:system/vendor/firmware/bcm4329/fw_bcmdhd_p2p.bin \
-    vendor/lenovo/k1/proprietary/vendor/firmware/bcm4329/fw_bcmdhd.bin:system/vendor/firmware/bcm4329/fw_bcmdhd.bin \
-    vendor/lenovo/k1/proprietary/vendor/firmware/bcm4330/fw_bcmdhd_apsta.bin:system/vendor/firmware/bcm4330/fw_bcmdhd_apsta.bin \
-    vendor/lenovo/k1/proprietary/vendor/firmware/bcm4330/fw_bcmdhd_p2p.bin:system/vendor/firmware/bcm4330/fw_bcmdhd_p2p.bin \
-    vendor/lenovo/k1/proprietary/vendor/firmware/bcm4330/fw_bcmdhd.bin:system/vendor/firmware/bcm4330/fw_bcmdhd.bin
-
 # Extra packages to build for this device
 PRODUCT_PACKAGES := \
     camera.tegra \
@@ -372,5 +361,3 @@ PRODUCT_COPY_FILES += \
 # goo.im stuff
 $(call inherit-product, $(LOCAL_PATH)/goo.mk)
 
-WIFI_BAND := 802_11_ABG
-$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4329/device-bcm.mk)

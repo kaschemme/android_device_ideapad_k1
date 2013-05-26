@@ -33,6 +33,8 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk)
 # This is where we'd set a backup provider if we had one
 $(call inherit-product, device/lenovo/k1/device_k1.mk)
 
+$(call inherit-product-if-exists, hardware/broadcom/wlan/bcm4329/Android.mk)
+
 # Discard inherited values and use our own instead.
 PRODUCT_NAME := full_k1
 PRODUCT_DEVICE := k1
