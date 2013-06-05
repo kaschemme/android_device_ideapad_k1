@@ -11,13 +11,14 @@ COMMON_GLOBAL_CFLAGS += -DICS_CAMERA_BLOB
 # inherit from the proprietary version
 -include vendor/lenovo/k1/BoardConfigVendor.mk
 
-TARGET_BOARD_PLATFORM := tegra
-
-TARGET_NO_BOOTLOADER := true
+# Board nameing
 TARGET_NO_RADIOIMAGE := true
-
-TARGET_ARCH := arm
 TARGET_BOARD_PLATFORM := tegra
+TARGET_BOOTLOADER_BOARD_NAME := ventana
+
+# Target arch settings
+TARGET_NO_BOOTLOADER := true
+TARGET_ARCH := arm
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
 TARGET_CPU_SMP := true
@@ -25,13 +26,9 @@ TARGET_ARCH_VARIANT := armv7-a
 TARGET_ARCH_VARIANT_CPU := cortex-a9
 TARGET_ARCH_VARIANT_FPU := vfpv3-d16
 ARCH_ARM_HAVE_TLS_REGISTER := true
-TARGET_BOOTLOADER_BOARD_NAME := k1
-
-TARGET_USERIMAGES_USE_EXT4 := true
 
 # Boot/Recovery image settings  
 BOARD_KERNEL_CMDLINE := 
-BOARD_USES_LEGACY_RIL := true
 BOARD_KERNEL_BASE := 0x10000000
 BOARD_KERNEL_PAGESIZE := 2048
 
@@ -42,7 +39,10 @@ BOARD_USERDATAIMAGE_PARTITION_SIZE := 28139061248
 BOARD_FLASH_BLOCK_SIZE := 131072
 
 BOARD_HAS_SDCARD_INTERNAL := true
+BOARD_USES_LEGACY_RIL := true
 
+# Todo fix these values to the spacific sizes
+TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_HAS_LARGE_FILESYSTEM := true
 BOARD_SYSTEM_DEVICE := /dev/block/mmcblk0p3
 BOARD_SYSTEM_FILESYSTEM := ext4
@@ -90,8 +90,8 @@ BOARD_SKIP_ANDROID_DOC_BUILD := true
 USE_OPENGL_RENDERER := true
 BOARD_EGL_CFG := vendor/lenovo/k1/proprietary/lib/egl/egl.cfg
 
+# Avoid the generation of ldrcc instructions
 NEED_WORKAROUND_CORTEX_A9_745320 := true
-BOARD_KERNEL_CMDLINE :=
 
 #Boot Animation
 TARGET_BOOTANIMATION_PRELOAD := true
