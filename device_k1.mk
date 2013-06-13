@@ -297,6 +297,10 @@ PRODUCT_COPY_FILES += \
     vendor/lenovo/k1/proprietary/usr/share/alsa/pcm/surround51.conf:system/usr/share/alsa/pcm/surround51.conf \
     vendor/lenovo/k1/proprietary/usr/share/alsa/pcm/surround71.conf:system/usr/share/alsa/pcm/surround71.conf
 
+# Enable AAC 5.1 output
+PRODUCT_PROPERTY_OVERRIDES += \
+	media.aac_51_output_enabled=true
+
 # Extra packages to build for this device
 PRODUCT_PACKAGES := \
     camera.tegra \
@@ -307,6 +311,8 @@ PRODUCT_PACKAGES := \
     make_ext4fs \
     setup_fs \
     audio.a2dp.default \
+    audio.usb.default \
+    audio.primary.tegra \
     com.android.future.usb.accessory \
     whisperd \
     liba2dp \
