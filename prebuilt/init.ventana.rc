@@ -42,19 +42,19 @@ on fs
     mount ext4 /dev/block/platform/sdhci-tegra.3/by-num/p7 /data wait noatime nosuid nodev journal_async_commit,data=writeback,nodelalloc,errors=panic
     mount ext4 /dev/block/platform/sdhci-tegra.3/by-num/p4 /cache wait noatime nosuid nodev journal_async_commit,data=writeback,nodelalloc,errors=panic
 #++[2012 03 22 | ASD2 SD2 | Sam_Chiu]Fix the factory reset so slowly in Hynix emmc
-    chmod 660 /dev/block/mmcblk0p5
+    chmod 0666 /dev/block/mmcblk0p5
     chown root system /dev/block/mmcblk0p5
 #++[2012 03 22 | ASD2 SD2 | Sam_Chiu]Fix the factory reset so slowly in Hynix emmc
         
 # load cifs modules
     insmod /system/lib/modules/md4.ko
     insmod /system/lib/modules/cifs.ko
-    insmod /system/lib/modules/usb-storage.ko
+    insmod /system/lib/modules/tun.ko
 
 on post-fs-data
-    mkdir /data/misc/wifi 0777 wifi wifi
-    mkdir /data/misc/wifi/sockets 0777 wifi wifi
-    mkdir /data/misc/dhcp 0777 dhcp dhcp
+    mkdir /data/misc/wifi 0770 wifi wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
     mkdir /data/nvcam 0777 system system
     mkdir /data/misc/dhcp 0777 dhcp dhcp    
     chown dhcp dhcp /data/misc/dhcp
@@ -106,16 +106,24 @@ on boot
 
     # Compal changes to get the bluetooth MAC address from EC BTMAC    
     chmod 0660 /sys/EcControl/BTMAC
+    chown bluetooth bluetooth /sys/EcControl/BTMAC
     setprop ro.bt.bdaddr_path /sys/EcControl/BTMAC
-    chown bluetooth bluetooth ro.bt.bdaddr_path
 
 # backlight
     chown system system /sys/class/backlight/pwm-backlight/brightness
 
 # Sensor
-    chmod 664 /sys/bus/iio/devices/device0/illuminance0_input
-    chmod 664 /sys/bus/iio/devices/device0/proximity_raw
-    chmod 664 /sys/bus/iio/devices/device0/illuminance0_calibbias
+    chmod 0666 /dev/nvhost-ctrl
+    chmod 0666 /dev/nvhost-display
+    chmod 0666 /dev/nvhost-dsi
+    chmod 0666 /dev/nvhost-gr2d
+    chmod 0666 /dev/nvhost-gr3d
+    chmod 0666 /dev/nvhost-isp
+    chmod 0666 /dev/nvhost-mpe
+    chmod 0666 /dev/nvhost-vi
+    chmod 0664 /sys/bus/iio/devices/device0/illuminance0_input
+    chmod 0664 /sys/bus/iio/devices/device0/proximity_raw
+    chmod 0664 /sys/bus/iio/devices/device0/illuminance0_calibbias
     write /sys/bus/iio/devices/device0/illuminance0_calibbias 8192
 
 
@@ -153,12 +161,21 @@ on boot
     write /sys/block/mmcblk0/queue/read_ahead_kb 2048
     write /sys/block/mmcblk1/queue/read_ahead_kb 2048
 
+#GPS
+    mkdir /data/gps
+    chown gps system /data/gps
+    chmod 770 /data/gps
+    chown gps system /sys/module/cpu_tegra/parameters/gps_start
+    chmod 600 /sys/module/cpu_tegra/parameters/gps_start
+    chown gps system /dev/ttyHS1
+    chmod 0664 /dev/ttyHS1
+
 # GPS init
     write /sys/class/gpio/export 203
     write /sys/class/gpio/gpio203/value 0
     write /sys/class/gpio/gpio203/direction out
-    chown root system /sys/class/gpio/gpio203/value
-    chmod 0666 /sys/class/gpio/gpio203/value
+    chown gps system /sys/class/gpio/gpio203/value
+    chmod 0664 /sys/class/gpio/gpio203/value
 
 #++Charlie
 # For NvPowerMgs access permission
@@ -244,14 +261,6 @@ on property:service.adb.root=1
 # USB
    chown system root /sys/bus/usb/devices/usb2/power/control
 
-# sacdar-20120411 begin
-# add a workaround to recovery 3G module if disconected from HUB
-service wwanloader /system/bin/wwanloader
-    class main
-    disabled
-    oneshot
-# sacdar-20120411 end
-
 # Compal-Indigo-Jason Dong-20120308 begin: change to WEXT WiFi driver
 service wpa_supplicant /system/bin/wpa_supplicant \
     -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
@@ -318,7 +327,7 @@ service sdcard /system/bin/sdcard /data/media 1023 1023
 
 #BCM
 service hciattach /system/bin/brcm_patchram_plus --enable_hci --scopcm=0,2,0,0,0,0,0,0,0,0 \
-    --baudrate 3000000 --patchramdir /etc/firmware/ --enable_lpm --tosleep=5000 --create_bdaddr /dev/ttyHS2
+    --baudrate 3000000 --patchra /etc/firmware/bcm4329.hcd --enable_lpm --tosleep=5000 --create_bdaddr /dev/ttyHS2
     class main
     user bluetooth
     group bluetooth net_bt_admin
