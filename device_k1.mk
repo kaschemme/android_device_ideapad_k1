@@ -238,8 +238,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilt/modules/md4.ko:system/lib/modules/md4.ko \
     $(LOCAL_PATH)/prebuilt/modules/tun.ko:system/lib/modules/tun.ko \
     $(LOCAL_PATH)/prebuilt/modules/bcm4329.ko:system/lib/modules/bcm4329.ko \
-    $(LOCAL_PATH)/prebuilt/modules/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko \
-    $(LOCAL_PATH)/prebuilt/modules/usb-storage.ko:system/lib/modules/usb-storage.ko
+    $(LOCAL_PATH)/prebuilt/modules/scsi_wait_scan.ko:system/lib/modules/scsi_wait_scan.ko
 
 #/system/usr/idc
 PRODUCT_COPY_FILES += \
